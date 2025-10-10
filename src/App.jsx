@@ -107,8 +107,8 @@ const leaderboardRows = [
 const buttonStyles = {
   primary:
     'inline-flex items-center justify-center rounded-full border border-leaf-600 bg-leaf-600 font-medium text-white shadow transition hover:bg-leaf-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
-  outline:
-    'inline-flex items-center justify-center rounded-full border border-leaf-600 font-medium text-leaf-700 transition hover:bg-leaf-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory',
+  login:
+    'inline-flex items-center justify-center rounded-full border border-leaf-600 bg-white/90 px-6 py-2 text-sm font-semibold text-leaf-700 shadow-sm transition hover:border-leaf-500 hover:bg-white hover:text-leaf-600 hover:shadow-lg active:translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory cursor-pointer',
 }
 
 function App() {
@@ -187,17 +187,8 @@ function Header({ isMobileOpen, onToggleMobile, onNavigate }) {
           ))}
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
-          <a
-            href="mailto:hello@ecobuddy.app"
-            className={`${buttonStyles.outline} px-5 py-2 text-sm`}
-          >
-            Contact
-          </a>
-          <a
-            href="#features"
-            className={`${buttonStyles.outline} px-5 py-2 text-sm`}
-          >
-            Explore features
+          <a href="/login" className={buttonStyles.login}>
+            Log in
           </a>
         </div>
         <div className="lg:hidden">
@@ -257,19 +248,8 @@ function MobileMenu({ isOpen, onNavigate }) {
           ))}
         </nav>
         <div className="flex flex-col gap-3">
-          <a
-            href="mailto:hello@ecobuddy.app"
-            onClick={onNavigate}
-            className={`${buttonStyles.outline} px-4 py-2 text-sm`}
-          >
-            Contact
-          </a>
-          <a
-            href="#features"
-            onClick={onNavigate}
-            className={`${buttonStyles.outline} px-4 py-2 text-sm`}
-          >
-            Explore features
+          <a href="/login" onClick={onNavigate} className={buttonStyles.login}>
+            Log in
           </a>
         </div>
       </div>
@@ -305,7 +285,7 @@ function Hero() {
             </div>
             <div className="flex items-center gap-2 rounded-full border border-line bg-white/60 px-4 py-2 shadow-sm">
               <span aria-hidden="true">🛠️</span>
-              <dt className="font-medium">Open-source soon</dt>
+              <dt className="font-medium">Built for ease</dt>
             </div>
           </dl>
         </div>
@@ -397,7 +377,7 @@ function EmailCapture() {
   const consentId = `${emailId}-consent`
 
   const consentCopy =
-    'Create your free EcoBuddy account. No fees, and you can unsubscribe anytime.'
+    'Create your free EcoBuddy account.'
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -424,7 +404,8 @@ function EmailCapture() {
     setEmail('')
   }
 
-  const buttonClasses = `${buttonStyles.primary} w-full px-5 py-3 text-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-70`
+  const buttonClasses =
+    'inline-flex w-full items-center justify-center rounded-full border border-leaf-600 bg-[#58B27C] px-5 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#4AA46E] hover:shadow-lg active:translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-70'
   const describedBy = [consentId, message ? messageId : null].filter(Boolean).join(' ') || undefined
 
   return (
@@ -432,7 +413,7 @@ function EmailCapture() {
       <div className="mb-4 flex flex-col gap-3">
         <button
           type="button"
-          className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink shadow hover:border-leaf-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300 sm:justify-start"
+          className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink shadow transition hover:border-leaf-600 hover:bg-leaf-600/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300 cursor-pointer"
         >
           <svg
             aria-hidden="true"
