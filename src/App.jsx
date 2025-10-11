@@ -277,15 +277,15 @@ function Hero() {
           <dl className="flex flex-wrap gap-4 text-sm text-ink/70">
             <div className="flex items-center gap-2 rounded-full border border-line bg-white/60 px-4 py-2 shadow-sm">
               <span aria-hidden="true">🌱</span>
-              <dt className="font-medium">Free to try</dt>
+              <dt className="font-medium">Free</dt>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-line bg-white/60 px-4 py-2 shadow-sm">
               <span aria-hidden="true">🔒</span>
-              <dt className="font-medium">Privacy first</dt>
+              <dt className="font-medium">Privacy-first</dt>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-line bg-white/60 px-4 py-2 shadow-sm">
               <span aria-hidden="true">🛠️</span>
-              <dt className="font-medium">Built for ease</dt>
+              <dt className="font-medium">Easy-to-use</dt>
             </div>
           </dl>
         </div>
@@ -376,9 +376,6 @@ function EmailCapture() {
   const messageId = `${emailId}-message`
   const consentId = `${emailId}-consent`
 
-  const consentCopy =
-    'Create your free EcoBuddy account.'
-
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (!email.trim()) {
@@ -400,8 +397,10 @@ function EmailCapture() {
     await new Promise((resolve) => setTimeout(resolve, 1200))
 
     setStatus('success')
-    setMessage("You're all set! Check your inbox for EcoBuddy tips.")
-    setEmail('')
+
+    setTimeout(() => {
+      window.location.href = '/login'
+    }, 700)
   }
 
   const buttonClasses =
@@ -441,14 +440,14 @@ function EmailCapture() {
         </button>
         <div className="flex items-center gap-3 text-xs text-ink/50">
           <span className="h-px flex-1 bg-line" />
-          or sign up with email
+          or use your email
           <span className="h-px flex-1 bg-line" />
         </div>
       </div>
       <form className="space-y-3" onSubmit={handleSubmit} noValidate>
         <div className="space-y-2">
           <label className="text-sm font-medium text-ink" htmlFor={emailId}>
-            Work or personal email
+            Work or Personal Email
           </label>
           <input
             id={emailId}
@@ -463,11 +462,8 @@ function EmailCapture() {
           />
         </div>
         <button type="submit" className={buttonClasses} disabled={status === 'loading'}>
-          {status === 'loading' ? 'Signing up...' : 'Create my account'}
+          {status === 'loading' ? 'Signing up...' : 'Create my EcoBuddy account'}
         </button>
-        <p id={consentId} className="text-xs text-ink/50">
-          {consentCopy}
-        </p>
         <p
           id={messageId}
           role="status"
