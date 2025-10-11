@@ -14,15 +14,15 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
       return ''
     }
   })
-  const [status, setStatus] = useState('idle')
-  const [message, setMessage] = useState('')
-  const [password, setPassword] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
+  const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'error' | 'success' | 'redirecting'
+  const [message, setMessage] = useState('') // message to display to user
+  const [password, setPassword] = useState('') // password state for login
+  const [isCreating, setIsCreating] = useState(false) // true if creating account, false if logging in
   const emailId = useId()
   const passwordId = `${emailId}-password`
   const messageId = `${emailId}-message`
   const consentId = `${emailId}-consent`
-  const isLoginPage = window.location.pathname === '/login'
+  const isLoginPage = window.location.pathname === '/login' // determine if on login page
   const navigate = useNavigate()
   const auth = getAuth(app)
   const googleProvider = new GoogleAuthProvider()
@@ -33,7 +33,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password)
       setStatus('success')
-      navigate('/home')
+      navigate('/home') // if login is successful, navigate to home
     } catch (err) {
       setStatus('error')
       if (err.code === 'auth/invalid-credential') {
@@ -50,7 +50,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password)
       setStatus('success')
-      navigate('/home') // change as needed
+      navigate('/home') // if account creation is successful, navigate to home
     } catch (err) {
       setStatus('error')
       if (err.code === 'auth/email-already-in-use') {
@@ -68,7 +68,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     try {
       await signInWithPopup(auth, googleProvider)
       setStatus('success')
-      navigate('/home')
+      navigate('/home') // if Google sign-in is successful, navigate to home
     } catch (err) {
       setStatus('error')
       setMessage(err.message)
