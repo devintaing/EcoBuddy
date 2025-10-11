@@ -1,12 +1,24 @@
 import { useId, useState } from 'react'
 
-export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue' }) {
-  const [email, setEmail] = useState('')
+export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', initialEmail }) {
+  const [email, setEmail] = useState(() => {
+    if (initialEmail) return initialEmail
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const e = params.get('email')
+      return e ? decodeURIComponent(e) : ''
+    } catch {
+      return ''
+    }
+  })
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
+  const [password, setPassword] = useState('')
   const emailId = useId()
+  const passwordId = `${emailId}-password`
   const messageId = `${emailId}-message`
   const consentId = `${emailId}-consent`
+  const isLoginPage = window.location.pathname === '/login'
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -23,6 +35,12 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue' }
       return
     }
 
+    if (isLoginPage && !password.trim()) {
+      setStatus('error')
+      setMessage('Please enter a password.')
+      return
+    }
+
     setStatus('loading')
     setMessage('')
 
@@ -31,7 +49,14 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue' }
     setStatus('redirecting')
 
     setTimeout(() => {
-      window.location.href = redirectTo
+      try {
+        const url = new URL(redirectTo, window.location.origin)
+        if (email.trim()) url.searchParams.set('email', email.trim())
+        window.location.href = url.toString()
+      } catch {
+        const sep = redirectTo.includes('?') ? '&' : '?'
+        window.location.href = `${redirectTo}${sep}email=${encodeURIComponent(email.trim())}`
+      }
     }, 700)
   }
 
@@ -81,6 +106,23 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue' }
             placeholder="you@example.com"
           />
         </div>
+        {isLoginPage && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink" htmlFor={passwordId}>
+              Password
+            </label>
+            <input
+              id={passwordId}
+              type="password"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-full border border-line bg-white/90 px-4 py-3 text-sm text-ink shadow-inner placeholder:text-ink/40 focus:border-leaf-600"
+              placeholder="Enter your password"
+            />
+          </div>
+        )}
         <button type="submit" className={buttonClasses} disabled={status === 'loading' || status === 'redirecting'}>
           {(status === 'loading' || status === 'redirecting') ? 'Redirecting you...' : buttonLabel}
         </button>
