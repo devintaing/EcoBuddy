@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
 
 const RecycleAI = () => {
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState("Find out what items can be recycled in an image!");
   const ai = new GoogleGenAI({apiKey: "AIzaSyBOHLCW_GJIZfYDV7VMxZOyySarrZpISws"}); // Replace with your API key
 
   const handleFileChange = async (e) => {
@@ -20,7 +20,7 @@ const RecycleAI = () => {
       { text: "Point out which items are and aren't recyclable in this image" },
     ];
 
-    console.log("waiting for Gemini...");
+    setResult("waiting for Gemini...");
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -46,14 +46,32 @@ const RecycleAI = () => {
 
   return (
     <div>
-      <h3>Upload an image to caption</h3>
-      <input type="file" accept="image/*" onChange={handleFileChange} />
-      {result && (
-        <div>
-          <h4>Caption:</h4>
-          <p>{result}</p>
-        </div>
-      )}
+      <h1 className="text-center text-5xl font-bold">Upload an image to caption</h1>
+       <div>
+          <div>
+            {result && (
+              <div>
+                <p>{result}</p>
+              </div>
+            )}
+          </div>
+
+          
+          <input
+          id="file-upload"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden" // hide the native input
+        />
+        
+        <label
+          htmlFor="file-upload"
+          className="text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+        >
+          Upload Image
+        </label>
+      </div>
     </div>
   );
 };
