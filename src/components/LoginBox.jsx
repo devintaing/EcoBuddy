@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
 import { app } from '../firebaseConfig'
 
 export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', initialEmail }) {
@@ -17,6 +17,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'error' | 'success' | 'redirecting'
   const [message, setMessage] = useState('') // message to display to user
   const [password, setPassword] = useState('') // password state for login
+  const [resetLoading, setResetLoading] = useState(false) // loading state for password reset only
   const [isCreating, setIsCreating] = useState(false) // true if creating account, false if logging in
   const emailId = useId()
   const passwordId = `${emailId}-password`
@@ -48,7 +49,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     e.preventDefault()
     setStatus('loading')
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password)
+      await createUserWithEmailAndPassword(auth, email.trim(), password)
       setStatus('success')
       navigate('/home') // if account creation is successful, navigate to home
     } catch (err) {
@@ -72,6 +73,32 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     } catch (err) {
       setStatus('error')
       setMessage(err.message)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setStatus('error')
+      setMessage('Please enter the email for your account.')
+      return
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailPattern.test(email.trim())) {
+      setStatus('error')
+      setMessage('That email looks off. Try again?')
+      return
+    }
+
+    setResetLoading(true)
+    setMessage('')
+    try {
+      await sendPasswordResetEmail(auth, email.trim())
+      setMessage('Password reset email sent. Check your inbox (and spam).')
+    } catch (err) {
+      setMessage(err.message)
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -126,6 +153,9 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
   return (
     <div className="rounded-3xl border border-line bg-white/80 p-6 shadow-lg backdrop-blur-sm">
       <form className="space-y-3" onSubmit={handleSubmit} noValidate>
+        <p id={messageId} role="status" aria-live="polite" className={`text-sm ${status === 'error' ? 'text-leaf-700' : 'text-ink/60'} mb-1`}>
+          {message}
+        </p>
         <div className="space-y-2">
           <label className="text-sm font-medium text-ink" htmlFor={emailId}>
             Work or Personal Email
@@ -176,9 +206,6 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
         <button type="submit" className={buttonClasses} disabled={status === 'loading' || status === 'redirecting'}>
           {(status === 'loading' || status === 'redirecting') ? (isLoginPage ? (isCreating ? 'Creating account...' : 'Signing in...') : 'Redirecting you...') : (isLoginPage ? (isCreating ? 'Create account' : 'Sign in') : buttonLabel)}
         </button>
-        <p id={messageId} role="status" aria-live="polite" className={`text-sm ${status === 'error' ? 'text-leaf-700' : 'text-ink/60'} mb-2`}>
-          {message}
-        </p>
         <div className="mt-1">
           <div className="flex items-center gap-3 text-xs text-ink/50">
             <span className="h-px flex-1 bg-line" />
@@ -203,6 +230,17 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
             Continue with Google
           </button>
         </div>
+        {!isCreating && (
+          <div className="flex justify-end mt-2">
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={resetLoading}
+              className="text-sm font-medium text-leaf-700 hover:underline">
+              {resetLoading ? 'Sending…' : 'Forgot password?'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   )
