@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.jsx'
 import Login from './Login.jsx'
 import RecycleAI from './RecycleAI.jsx';
+import Home from './Home.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route path="/recycle" element={<RecycleAI />} />
+        <Route path="/home" element={<Home />} />
       </Routes>
     </Router>
   </StrictMode>,
