@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { signOut } from 'firebase/auth'
+import { auth } from './firebaseConfig'
 
 const Home = () => {
   const navigate = useNavigate();
@@ -7,7 +9,8 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
       <h1 className="text-4xl font-bold">Welcome to EcoBuddy!</h1>
-      <h2 className="text-2xl font-bold">What would you like to do?</h2>
+      <p className="">You have logged ... actions so far.</p>
+      <h2 className="text-2xl font-bold">What would you like to do today?</h2>
       <div className="flex gap-4 mt-4">
         <button onClick={() => navigate('/recycle')}>
           Recyclability Analysis
@@ -21,11 +24,27 @@ const Home = () => {
           Action Log
         </button>
 
+        <button onClick={() => navigate('/leaderboard')}>
+          Leaderboard
+        </button>
+
         <button onClick={() => navigate('/settings')}>
           Settings
         </button>
 
-
+        <button
+          onClick={async () => {
+            try {
+              await signOut(auth)
+            } catch (err) {
+              console.warn('Sign out failed', err)
+            } finally {
+              navigate('/')
+            }
+          }}
+        >
+          Logout
+        </button>
       </div>
     </div>
   );
