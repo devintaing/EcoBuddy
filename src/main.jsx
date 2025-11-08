@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import AuthInactivityHandler from './AuthInactivityHandler.jsx'
 import './index.css'
 import App from './App.jsx'
 import Login from './Login.jsx'
@@ -14,6 +15,7 @@ import Leaderboard from './Leaderboard.jsx';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
+      <AuthInactivityHandler />
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
