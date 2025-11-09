@@ -1,7 +1,9 @@
 import { useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, updateProfile } from 'firebase/auth'
 import { app } from '../firebaseConfig'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebaseConfig'
 
 export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', initialEmail }) {
   const [email, setEmail] = useState(() => {
@@ -17,6 +19,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'error' | 'success' | 'redirecting'
   const [message, setMessage] = useState('') // message to display to user
   const [password, setPassword] = useState('') // password state for login
+  const [displayName, setDisplayName] = useState('') // display name for account creation
   const [resetLoading, setResetLoading] = useState(false) // loading state for password reset only
   const [isCreating, setIsCreating] = useState(false) // true if creating account, false if logging in
   const emailId = useId()
@@ -49,7 +52,31 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
     e.preventDefault()
     setStatus('loading')
     try {
-      await createUserWithEmailAndPassword(auth, email.trim(), password)
+      const trimmedName = String(displayName || '').trim().slice(0, 50)
+      if (!trimmedName) {
+        setStatus('error')
+        setMessage('Please provide a display name for your account.')
+        return
+      }
+
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
+      const user = cred.user
+
+      // Update Auth profile so currentUser.displayName is set
+      try {
+        await updateProfile(user, { displayName: trimmedName })
+      } catch (err) {
+        console.warn('Failed to update auth profile displayName', err)
+      }
+
+      // Persist to Firestore users/{uid} similar to Settings
+      try {
+        // include anonymous:true by default for newly created accounts (will be used for leaderboard)
+        await setDoc(doc(db, 'users', user.uid), { displayName: trimmedName, anonymous: true }, { merge: true })
+      } catch (err) {
+        console.warn('Failed to write user displayName to Firestore', err)
+      }
+
       setStatus('success')
       navigate('/home') // if account creation is successful, navigate to home
     } catch (err) {
@@ -189,6 +216,18 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
                 placeholder="Enter your password"
               />
             </div>
+            {isCreating && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-ink">Display Name</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter a display name"
+                  className="w-full rounded-full border border-line bg-white/90 px-4 py-3 text-sm text-ink shadow-inner placeholder:text-ink/40 focus:border-leaf-600"
+                />
+              </div>
+            )}
             <div className="text-sm text-center">
               {isCreating ? (
                 <button type="button" onClick={() => setIsCreating(false)} className="font-medium text-leaf-700 hover:underline">
