@@ -12,6 +12,8 @@ const Settings = () => {
   const [initialDisplayName, setInitialDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
+  const [savingAnonymous, setSavingAnonymous] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -30,10 +32,12 @@ const Settings = () => {
         const userRef = doc(db, 'users', currentUser.uid);
         const snap = await getDoc(userRef);
         const nameFromDoc = snap.exists() ? snap.data().displayName : null;
+        const anonFromDoc = snap.exists() ? Boolean(snap.data().anonymous) : false;
 
         const name = nameFromDoc || currentUser.displayName || '';
         setDisplayName(name);
         setInitialDisplayName(name);
+  setAnonymous(anonFromDoc);
       } catch (err) {
         console.error('Failed to read user displayName:', err);
         setError(err);
@@ -71,6 +75,22 @@ const Settings = () => {
     }
   };
 
+  const handleToggleAnonymous = async (next) => {
+    if (!user) return;
+    setSavingAnonymous(true);
+    setError(null);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, { anonymous: !!next }, { merge: true });
+      setAnonymous(!!next);
+    } catch (err) {
+      console.error('Failed to update anonymous flag:', err);
+      setError(err);
+    } finally {
+      setSavingAnonymous(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
       <h1 className="text-4xl font-bold">Settings</h1>
@@ -88,15 +108,26 @@ const Settings = () => {
               className="w-full p-2 border rounded"
             />
 
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={handleSave}
-                disabled={saving || displayName.trim() === initialDisplayName.trim()}
-                className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={handleSave}
+                  disabled={saving || displayName.trim() === initialDisplayName.trim()}
+                  className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <label className="font-semibold">Anonymous</label>
+                <button
+                  onClick={() => handleToggleAnonymous(!anonymous)}
+                  disabled={savingAnonymous}
+                  className={`px-3 py-1 rounded ${anonymous ? 'bg-green-600 text-white' : 'bg-gray-200 text-black'}`}
+                >
+                  {savingAnonymous ? 'Saving…' : (anonymous ? 'On' : 'Off')}
+                </button>
+              </div>
 
             {success && <div style={{ color: 'green' }}>{success}</div>}
             {error && <div style={{ color: 'red' }}>Error: {error.message}</div>}
