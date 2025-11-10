@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const ActionLog = () => {
   const [action, setAction] = useState("");
@@ -9,7 +10,7 @@ const ActionLog = () => {
   const navigate = useNavigate();
 
   const logAction = async() => {
-    const ai = new GoogleGenAI({apiKey: "AIzaSyBOHLCW_GJIZfYDV7VMxZOyySarrZpISws"}); // Replace with your API key
+    const ai = new GoogleGenAI({apiKey: apiKey}); // Replace with your API key
 
     const contents = [
       { text: `Respond with just the number of pounds of C02 saved on the first line.
@@ -46,7 +47,7 @@ const ActionLog = () => {
     </div>
 
 
-      <p>Carbon Saved: {carbonSaved}</p>
+      <p>Carbon Saved: {carbonSaved} pounds</p>
       <button onClick={() => navigate('/home')}>
         Back to Home
       </button>

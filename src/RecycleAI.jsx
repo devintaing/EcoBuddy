@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const RecycleAI = () => {
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState("Find out what items can be recycled in an image!");
-  const ai = new GoogleGenAI({apiKey: "AIzaSyBOHLCW_GJIZfYDV7VMxZOyySarrZpISws"}); // Replace with your API key
+  const ai = new GoogleGenAI({apiKey: apiKey}); // Replace with your API key
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
