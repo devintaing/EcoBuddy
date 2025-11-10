@@ -230,11 +230,19 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
             )}
             <div className="text-sm text-center">
               {isCreating ? (
-                <button type="button" onClick={() => setIsCreating(false)} className="font-medium text-leaf-700 hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(false)}
+                  className="font-medium text-leaf-700 transition hover:text-leaf-600 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/40 cursor-pointer"
+                >
                   Already have an account? Sign in.
                 </button>
               ) : (
-                <button type="button" onClick={() => setIsCreating(true)} className="font-medium text-leaf-700 hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(true)}
+                  className="font-medium text-leaf-700 transition hover:text-leaf-600 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/40 cursor-pointer"
+                >
                   Don't have an account? Create one.
                 </button>
               )}
@@ -275,7 +283,7 @@ export default function LoginBox({ redirectTo = '/' , buttonLabel = 'Continue', 
               type="button"
               onClick={handlePasswordReset}
               disabled={resetLoading}
-              className="text-sm font-medium text-leaf-700 hover:underline">
+              className="text-sm font-medium text-leaf-700 transition hover:text-leaf-600 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/40 cursor-pointer">
               {resetLoading ? 'Sending…' : 'Forgot password?'}
             </button>
           </div>
