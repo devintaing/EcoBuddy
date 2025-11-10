@@ -27,8 +27,9 @@ export default function AuthInactivityHandler() {
           if (auth && auth.currentUser) {
             await signOut(auth)
             try {
-              if ((location?.pathname !== '/login') && (location?.pathname !== '/')) {
-              navigate('/login')
+              const currentPath = window.location.pathname
+              if ((currentPath !== '/login') && (currentPath !== '/')) {
+                navigate('/login')
               }
               console.log('Signed out user due to inactivity')
             } catch (navErr) {
