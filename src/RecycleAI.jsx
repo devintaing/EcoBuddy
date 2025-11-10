@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
+import Navbar from './components/Navbar';
 
 const RecycleAI = () => {
   const [preview, setPreview] = useState(null);
@@ -100,71 +101,74 @@ const RecycleAI = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-center text-5xl font-bold">Upload an image to analyze</h1>
-        
-      <div className="flex flex-col items-center justify-center min-h-screen space-y-8 w-5/6 p-6 bg-gray-50 rounded-lg shadow-xl">
-        {preview && (
-          <div className="flex flex-col items-center space-y-2">
-            <h2 className="text-2xl font-semibold">Image Preview</h2>
-            <img
-              src={preview}
-              alt="Preview"
-              className="max-w-xs rounded-lg shadow-lg border-4 border-gray-300"
-            />
-          </div>
-        )}
-
-        {initialText && (
-            <p className="text-gray-700 text-xl font-medium">{initialText}</p>
-        )}
-
-        {analysisResult && (
-            <div className="w-full max-w-md bg-white p-6 border-2 border-green-500 rounded-lg shadow-2xl space-y-4">
-                <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
-                
-                {/* Field 1: Object */}
-                <div className="border-l-4 border-green-500 pl-3">
-                    <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
-                    <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
-                </div>
-
-                {/* Field 2: Category */}
-                <div className="border-l-4 border-green-500 pl-3 pt-3">
-                    <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
-                    <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
-                        {analysisResult.category.toUpperCase()}
-                    </p>
-                </div>
-
-                {/* Field 3: Instructions */}
-                <div className="pt-3">
-                    <h3 className="text-lg font-semibold text-gray-800 border-t pt-3">📝 Instructions:</h3>
-                    <ul className="list-disc list-inside space-y-2 mt-2 text-gray-700">
-                        {analysisResult.instructions.map((instruction, index) => (
-                            <li key={index} className="text-left font-medium">
-                                {instruction}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+    <div className="w-full">
+      <Navbar />
+      <div className="flex flex-col items-center justify-center">
+          
+        <div className="flex flex-col items-center justify-center min-h-screen space-y-8 w-5/6 p-6 bg-gray-50 rounded-lg shadow-xl">
+          {preview && (
+            <div className="flex flex-col items-center space-y-2">
+              <h2 className="text-2xl font-semibold">Image Preview</h2>
+              <img
+                src={preview}
+                alt="Preview"
+                className="max-w-xs rounded-lg shadow-lg border-4 border-gray-300"
+              />
             </div>
-        )}
+          )}
 
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+          {initialText && (
+              <p className="text-gray-700 text-xl font-medium">{initialText}</p>
+          )}
 
-        <label
-          htmlFor="file-upload"
-          className="text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
-        >
-          Upload Image
-        </label>
+          {analysisResult && (
+              <div className="w-full max-w-md bg-white p-6 border-2 border-green-500 rounded-lg shadow-2xl space-y-4">
+                  <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
+                  
+                  {/* Field 1: Object */}
+                  <div className="border-l-4 border-green-500 pl-3">
+                      <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
+                      <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
+                  </div>
+
+                  {/* Field 2: Category */}
+                  <div className="border-l-4 border-green-500 pl-3 pt-3">
+                      <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
+                      <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
+                          {analysisResult.category.toUpperCase()}
+                      </p>
+                  </div>
+
+                  {/* Field 3: Instructions */}
+                  <div className="pt-3">
+                      <h3 className="text-lg font-semibold text-gray-800 border-t pt-3">📝 Instructions:</h3>
+                      <ul className="list-disc list-inside space-y-2 mt-2 text-gray-700">
+                          {analysisResult.instructions.map((instruction, index) => (
+                              <li key={index} className="text-left font-medium">
+                                  {instruction}
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
+              </div>
+          )}
+
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*" 
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          <label
+            htmlFor="file-upload"
+            className="text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            Upload Image
+          </label>
+        </div>
+        
       </div>
     </div>
     
