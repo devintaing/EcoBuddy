@@ -34,7 +34,7 @@ const Navbar = () => {
     <nav className="w-full bg-gray-50 border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
         <div
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="flex items-center gap-2 cursor-pointer"
         >
           <LeafLogo className="h-10 w-10 text-leaf-600" />
@@ -46,14 +46,14 @@ const Navbar = () => {
         <div className="flex items-center gap-6">
           <button
             onClick={() => navigate("/home")}
-            className="text-gray-700 hover:text-green-700 transition font-medium"
+            className="text-gray-700 hover:text-green-700 transition font-medium cursor-pointer"
           >
             Home
           </button>
           
           <button
             onClick={() => navigate("/settings")}
-            className="text-gray-700 hover:text-green-700 transition font-medium"
+            className="text-gray-700 hover:text-green-700 transition font-medium cursor-pointer"
           >
             Settings
           </button>
