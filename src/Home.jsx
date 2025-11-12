@@ -124,11 +124,17 @@ const Home = () => {
               <p className="text-sm uppercase tracking-[0.2em] text-leaf-700">Today&apos;s impact</p>
               <h1 className="text-4xl font-serif text-ink sm:text-5xl">Welcome back, {userName}</h1>
               <p className="max-w-2xl text-ink/75">
-                {loadingCount
-                  ? 'Loading your eco-actions...'
-                  : countError
-                    ? `Demo data: Unable to load action count (${countError.message}).`
-                    : `Demo data: You have logged ${count ?? 0} actions so far. Keep the streak going!`}
+                  {loadingCount ? (
+                    'Loading your eco-actions...'
+                  ) : countError ? (
+                    `Unable to load action count (${countError.message}).`
+                  ) : (
+                    (() => {
+                      const n = count ?? 0
+                      const action = n === 1 ? 'action' : 'actions'
+                      return `You have logged ${n} ${action} so far.${n > 0 ? ' Keep it up!' : ''}`
+                    })()
+                  )}
               </p>
               <div className="flex flex-wrap gap-3">
                 <button type="button" onClick={handleNavigate('/settings')} className={buttonStyles.ghost}>
@@ -192,7 +198,6 @@ const Home = () => {
           <div className="rounded-3xl border border-line bg-white/90 p-6 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-2xl text-ink">Recent eco-actions</h2>
-              <span className="rounded-full bg-fern-300/40 px-3 py-1 text-xs font-semibold text-ink">Demo data</span>
             </div>
             <ul className="mt-6 space-y-4">
               {timelineEntries.length === 0 ? (
