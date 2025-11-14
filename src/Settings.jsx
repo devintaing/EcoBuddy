@@ -64,7 +64,6 @@ const Settings = () => {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, { displayName: trimmed }, { merge: true });
 
-      setSuccess('Display name saved');
       setInitialDisplayName(trimmed);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {

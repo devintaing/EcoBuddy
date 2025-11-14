@@ -64,8 +64,10 @@ function Profile() {
                                     const activitiesRef = collection(db, 'users', user.uid, 'activities');
                                     const docRef = await addDoc(activitiesRef, {
                                         Action: 'test action written from /profile',
-                                        CarbonSaved: 10,
-                                        CreatedAt: serverTimestamp()
+                                        Points: 10,
+                                        CarbonSaved: 20,
+                                        CreatedAt: serverTimestamp(),
+                                        ActionType: 'Test'
                                     });
                                     setCreateSuccess(`Created activity ${docRef.id}`);
                                 } catch (err) {
