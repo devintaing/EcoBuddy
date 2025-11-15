@@ -6,7 +6,7 @@ const RecycleAI = () => {
   const [preview, setPreview] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [initialText, setInitialText] = useState("Find out what items can be recycled in an image!");
-  const ai = new GoogleGenAI({apiKey: "AIzaSyBOHLCW_GJIZfYDV7VMxZOyySarrZpISws"});
+  const ai = new GoogleGenAI({apiKey: apiKey});
   const prompt = `You are an expert waste and recycling assistant. Your task is to analyze the provided image of a single object (which may be a composite of materials) and generate a JSON object with specific recycling and disposal information.
 
     The JSON object must contain three keys:
