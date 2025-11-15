@@ -1,89 +1,106 @@
-import React, { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './firebaseConfig.js'
+import React, { useState, useEffect } from "react";
+import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import { useAuthListener } from "./hooks/useAuthListener";
 
 function Profile() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [userDoc, setUserDoc] = useState(null);
-    const [error, setError] = useState(null);
+    const { user, userDoc, loading, error } = useAuthListener();
     const [creating, setCreating] = useState(false);
-    const [createError, setCreateError] = useState(null);
     const [createSuccess, setCreateSuccess] = useState(null);
+    const [createError, setCreateError] = useState(null);
 
+    // Activities state
+    const [activities, setActivities] = useState([]);
+    const [activitiesLoading, setActivitiesLoading] = useState(true);
+    const [activitiesError, setActivitiesError] = useState(null);
+
+    // Load user activities
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+        if (!user) return;
 
-            if (!currentUser) {
-                setUserDoc(null);
-                setLoading(false);
-                return;
-            }
+        async function fetchActivities() {
+            setActivitiesLoading(true);
 
             try {
-                // Read the Firestore document at /users/{uid}
-                const userRef = doc(db, 'users', currentUser.uid);
-                const userSnap = await getDoc(userRef);
+                const activitiesRef = collection(db, "users", user.uid, "activities");
+                const snapshot = await getDocs(activitiesRef);
 
-                if (userSnap.exists()) {
-                    setUserDoc({ id: userSnap.id, ...userSnap.data() });
-                } else {
-                    // Document does not exist
-                    setUserDoc(null);
-                }
+                const list = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+
+                setActivities(list);
             } catch (err) {
-                console.error('Failed to fetch user document:', err);
-                setError(err);
+                console.error("Failed to load activities:", err);
+                setActivitiesError(err);
             } finally {
-                setLoading(false);
+                setActivitiesLoading(false);
             }
-        });
+        }
 
-        return () => unsubscribe();
-    }, []);
+        fetchActivities();
+    }, [user]);
 
     if (loading) return <p>Loading user data...</p>;
-
     if (!user) return <p>No user is signed in.</p>;
+
+    // Create test activity
+    const createTestActivity = async () => {
+        setCreating(true);
+        setCreateError(null);
+        setCreateSuccess(null);
+
+        try {
+            const activitiesRef = collection(db, "users", user.uid, "activities");
+            const docRef = await addDoc(activitiesRef, {
+                Action: "test action written from /profile",
+                Points: 10,
+                CarbonSaved: 20,
+                CreatedAt: serverTimestamp(),
+                ActionType: "Test",
+            });
+
+            setCreateSuccess(`Created activity ${docRef.id}`);
+        } catch (err) {
+            console.error("Failed to create test activity", err);
+            setCreateError(err.message);
+        } finally {
+            setCreating(false);
+        }
+    };
 
     return (
         <div>
             <h2>Welcome, {user.displayName || user.email}!</h2>
             <p>User ID: {user.uid}</p>
 
-                    <div style={{ margin: '12px 0' }}>
-                        <button
-                            onClick={async () => {
-                                if (!user) return;
-                                setCreating(true);
-                                setCreateError(null);
-                                setCreateSuccess(null);
-                                try {
-                                    const activitiesRef = collection(db, 'users', user.uid, 'activities');
-                                    const docRef = await addDoc(activitiesRef, {
-                                        Action: 'test action written from /profile',
-                                        Points: 10,
-                                        CarbonSaved: 20,
-                                        CreatedAt: serverTimestamp(),
-                                        ActionType: 'Test'
-                                    });
-                                    setCreateSuccess(`Created activity ${docRef.id}`);
-                                } catch (err) {
-                                    console.error('Failed to create test activity', err);
-                                    setCreateError(err);
-                                } finally {
-                                    setCreating(false);
-                                }
-                            }}
-                            disabled={!user || creating}
-                        >
-                            {creating ? 'Creating...' : 'Create test action'}
-                        </button>
-                    </div>
+            <button onClick={createTestActivity} disabled={creating}>
+                {creating ? "Creating..." : "Create test action"}
+            </button>
 
-            {error && <p style={{ color: 'red' }}>Error loading profile: {error.message}</p>}
+            {createSuccess && <p style={{ color: "green" }}>{createSuccess}</p>}
+            {createError && <p style={{ color: "red" }}>{createError}</p>}
+            {error && <p style={{ color: "red" }}>{error.message}</p>}
+
+            <hr />
+
+            <h3>Your Activities</h3>
+
+            {activitiesLoading && <p>Loading activities...</p>}
+            {activitiesError && <p style={{ color: "red" }}>{activitiesError.message}</p>}
+
+            {!activitiesLoading && activities.length === 0 && (
+                <p>You have no activities yet.</p>
+            )}
+
+            <ul>
+                {activities.map((a) => (
+                    <li key={a.id}>
+                        <strong>{a.Action}</strong> — {a.Points} pts — Saved {a.CarbonSaved}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
