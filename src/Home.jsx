@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from './firebaseConfig.js'
-import { collection, getDocs, getCountFromServer } from 'firebase/firestore'
+import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit } from 'firebase/firestore'
 
 const featureCards = [
   {
@@ -30,8 +30,6 @@ const featureCards = [
     path: '/leaderboard',
   },
 ]
-
-const timelineEntries = []
 
 const metrics = [
   { label: 'Current streak', value: 'No streak yet' },
@@ -64,6 +62,18 @@ const Home = () => {
   const [loadingCount, setLoadingCount] = useState(true)
   const [countError, setCountError] = useState(null)
   const [userName, setUserName] = useState('EcoBuddy friend')
+  const [recentActions, setRecentActions] = useState([])
+  const [recentLoading, setRecentLoading] = useState(true)
+
+  // map each action type to an emoji
+  const getActionEmoji = (actionType) => {
+    const t = (actionType || '').toString().toLowerCase()
+    if (t.includes('compost')) return '🌿'
+    if (t.includes('recycle')) return '♻️'
+    if (t.includes('trash') || t.includes('landfill') || t.includes('garbage')) return '🗑️'
+    if (t.includes('test')) return '🧪'
+    return '♻️'
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -74,6 +84,8 @@ const Home = () => {
 
       if (!currentUser) {
         setLoadingCount(false)
+        setRecentActions([])
+        setRecentLoading(false)
         return
       }
 
@@ -92,9 +104,49 @@ const Home = () => {
       } finally {
         setLoadingCount(false)
       }
+
+      try {
+        setRecentLoading(true)
+        const activitiesRef = collection(db, 'users', currentUser.uid, 'activities')
+        const q = query(activitiesRef, orderBy('CreatedAt', 'desc'), limit(3))
+        const snapUnsub = onSnapshot(q, (snap) => {
+          const items = snap.docs.map((d) => {
+            const data = d.data() || {}
+            const ts = data.CreatedAt && typeof data.CreatedAt.toDate === 'function' ? data.CreatedAt.toDate() : (data.CreatedAt instanceof Date ? data.CreatedAt : null)
+            const time = ts ? ts.toLocaleString() : ''
+            const pts = (data.Points)
+            const impactLabel = pts != null && pts !== '' ? `+${pts} pts` : ''
+            return {
+              id: d.id,
+              title: data.Action || 'Action',
+              time,
+              impact: impactLabel,
+              metadata: data.metadata || {},
+              actionType: (data.ActionType ?? '')
+            }
+          })
+          setRecentActions(items)
+          setRecentLoading(false)
+        }, (err) => {
+          console.error('Recent actions listener error', err)
+          setRecentActions([])
+          setRecentLoading(false)
+        })
+
+        unsubscribe._snapUnsub = snapUnsub
+      } catch (err) {
+        console.error('Failed to attach recent actions listener', err)
+        setRecentActions([])
+        setRecentLoading(false)
+      }
     })
 
-    return () => unsubscribe()
+    return () => {
+      if (unsubscribe && typeof unsubscribe._snapUnsub === 'function') {
+        try { unsubscribe._snapUnsub() } catch (e) {}
+      }
+      unsubscribe()
+    }
   }, [])
 
   const cards = useMemo(() => featureCards, [])
@@ -124,11 +176,17 @@ const Home = () => {
               <p className="text-sm uppercase tracking-[0.2em] text-leaf-700">Today&apos;s impact</p>
               <h1 className="text-4xl font-serif text-ink sm:text-5xl">Welcome back, {userName}</h1>
               <p className="max-w-2xl text-ink/75">
-                {loadingCount
-                  ? 'Loading your eco-actions...'
-                  : countError
-                    ? `Demo data: Unable to load action count (${countError.message}).`
-                    : `Demo data: You have logged ${count ?? 0} actions so far. Keep the streak going!`}
+                  {loadingCount ? (
+                    'Loading your eco-actions...'
+                  ) : countError ? (
+                    `Unable to load action count (${countError.message}).`
+                  ) : (
+                    (() => {
+                      const n = count ?? 0
+                      const action = n === 1 ? 'action' : 'actions'
+                      return `You have logged ${n} ${action} so far.${n > 0 ? ' Keep it up!' : ''}`
+                    })()
+                  )}
               </p>
               <div className="flex flex-wrap gap-3">
                 <button type="button" onClick={handleNavigate('/settings')} className={buttonStyles.ghost}>
@@ -175,7 +233,7 @@ const Home = () => {
 
         <section className="mt-12 rounded-3xl border border-line bg-white/80 p-6 shadow-md backdrop-blur-sm">
           <div className="space-y-4">
-            <h2 className="text-2xl font-serif text-ink">Your progress</h2>
+            <h2 className="text-2xl font-serif text-ink">Your Progress</h2>
             <p className="text-sm text-ink/70">Log an action to unlock streaks, weekly points, and CO₂ insights.</p>
             <div className="flex flex-wrap gap-3">
               {metrics.map((metric) => (
@@ -191,19 +249,20 @@ const Home = () => {
         <section className="mt-12 grid gap-6 lg:grid-cols-[3fr_2fr]">
           <div className="rounded-3xl border border-line bg-white/90 p-6 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl text-ink">Recent eco-actions</h2>
-              <span className="rounded-full bg-fern-300/40 px-3 py-1 text-xs font-semibold text-ink">Demo data</span>
+              <h2 className="font-serif text-2xl text-ink">Recent Eco-Actions</h2>
             </div>
             <ul className="mt-6 space-y-4">
-              {timelineEntries.length === 0 ? (
+              {recentLoading ? (
+                <li className="rounded-2xl border border-dashed border-line bg-white/70 p-6 text-center text-sm text-ink/70">Loading recent actions…</li>
+              ) : recentActions.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-line bg-white/70 p-6 text-center text-sm text-ink/70">
                   No actions logged yet. Log your first eco-action to see it appear here.
                 </li>
               ) : (
-                timelineEntries.map((entry) => (
-                  <li key={entry.title} className="flex items-center gap-4 rounded-2xl border border-line bg-white/80 p-4 shadow-sm">
+                recentActions.map((entry) => (
+                  <li key={entry.id} className="flex items-center gap-4 rounded-2xl border border-line bg-white/80 p-4 shadow-sm">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ivory text-2xl">
-                      <span aria-hidden="true">{entry.icon}</span>
+                      <span aria-hidden="true">{getActionEmoji(entry.actionType)}</span>
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-ink">{entry.title}</p>

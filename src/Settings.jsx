@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { onAuthStateChanged, updateProfile } from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from './firebaseConfig.js'
 
 const Settings = () => {
@@ -64,7 +64,6 @@ const Settings = () => {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, { displayName: trimmed }, { merge: true });
 
-      setSuccess('Display name saved');
       setInitialDisplayName(trimmed);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -92,56 +91,81 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-4xl font-bold">Settings</h1>
+    <div className="min-h-screen bg-ivory px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8">
+        <header className="space-y-3">
+          <h1 className="text-3xl font-serif text-ink sm:text-4xl">⚙️ Settings</h1>
+          <p className="text-sm text-ink/70">Adjust your display name and choose how you show up on leaderboards.</p>
+        </header>
 
-      <div className="w-full max-w-md">
         {loading ? (
-          <p>Loading...</p>
-        ) : user ? (
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold">Display Name</label>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your display name"
-              className="w-full p-2 border rounded"
-            />
-
-              <div className="flex gap-2 items-center">
+          <div className="rounded-3xl border border-line bg-white/80 p-6 text-center text-sm text-ink/70 shadow-lg">Loading your preferences…</div>
+        ) : !user ? (
+          <div className="rounded-3xl border border-line bg-white/80 p-6 text-center text-sm text-ink/70 shadow-lg">No user is signed in.</div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className="rounded-3xl border border-line bg-white/90 p-6 shadow-lg backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-leaf-700">Profile</p>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Display name</h2>
+              <p className="mt-1 text-sm text-ink/60">Shown in your Home dashboard and leaderboards. Max 50 characters.</p>
+              <div className="mt-4 space-y-3">
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Your display name"
+                  className="w-full rounded-2xl border border-line bg-white/90 px-4 py-3 text-sm text-ink shadow-inner placeholder:text-ink/40 focus:border-leaf-600 focus:outline-none"
+                />
                 <button
                   onClick={handleSave}
                   disabled={saving || displayName.trim() === initialDisplayName.trim()}
-                  className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-full border border-[#2E7D32] bg-[#2E7D32] px-5 py-2.5 text-sm font-semibold text-white shadow transition-all hover:-translate-y-0.5 hover:bg-[#256528] hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300 active:translate-y-0 cursor-pointer disabled:cursor-not-allowed disabled:bg-line disabled:text-ink/50 disabled:border-line disabled:shadow-none disabled:hover:translate-y-0 disabled:hover:bg-line disabled:hover:text-ink/50"
                 >
-                  {saving ? 'Saving...' : 'Save'}
+                  {saving ? 'Saving…' : 'Save display name'}
                 </button>
+                <p className="text-xs text-ink/50">Tip: Use your first name or a nickname. You can change it anytime.</p>
               </div>
+              {success && <div className="mt-4 rounded-2xl border border-fern-300/60 bg-fern-300/30 px-4 py-2 text-sm font-medium text-leaf-700">{success}</div>}
+              {error && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700">Error: {error.message}</div>}
+            </section>
 
-              <div className="mt-4 flex items-center gap-2">
-                <label className="font-semibold">Anonymous</label>
+            <section className="rounded-3xl border border-line bg-white/90 p-6 shadow-lg backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-leaf-700">Privacy</p>
+              <h2 className="mt-2 text-xl font-semibold text-ink">Anonymous mode</h2>
+              <p className="mt-1 text-sm text-ink/60">Hide your name on community leaderboards. You’ll still see your own stats.</p>
+              <div className="mt-6 flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-ink">Leaderboard visibility</p>
+                  <p className="text-xs text-ink/60">Currently {anonymous ? 'hidden' : 'visible'} to others.</p>
+                </div>
                 <button
                   onClick={() => handleToggleAnonymous(!anonymous)}
                   disabled={savingAnonymous}
-                  className={`px-3 py-1 rounded ${anonymous ? 'bg-green-600 text-white' : 'bg-gray-200 text-black'}`}
+                  className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300 active:translate-y-0 ${
+                    anonymous
+                      ? 'border border-[#2E7D32] bg-[#2E7D32] text-white hover:bg-[#256528]'
+                      : 'border border-line bg-white text-ink hover:border-leaf-600 hover:text-leaf-700'
+                  } ${savingAnonymous ? 'cursor-not-allowed bg-line text-ink/50 border-line hover:translate-y-0 hover:shadow-none' : 'cursor-pointer'}`}
                 >
-                  {savingAnonymous ? 'Saving…' : (anonymous ? 'On' : 'Off')}
+                  {savingAnonymous ? 'Saving…' : anonymous ? 'Anonymous On' : 'Anonymous Off'}
                 </button>
               </div>
-
-            {success && <div style={{ color: 'green' }}>{success}</div>}
-            {error && <div style={{ color: 'red' }}>Error: {error.message}</div>}
+              <p className="mt-3 text-xs text-ink/60">Switch takes effect immediately for future leaderboard updates.</p>
+            </section>
           </div>
-        ) : (
-          <p>No user is signed in.</p>
         )}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => navigate('/home')}
+            className="inline-flex items-center justify-center rounded-full border border-line bg-white px-5 py-2 text-sm font-medium text-ink/80 transition-all hover:-translate-y-0.5 hover:border-leaf-600 hover:text-leaf-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300 active:translate-y-0 cursor-pointer"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
-
-      <button onClick={() => navigate('/home')}>
-        Back to Home
-      </button>
     </div>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings
