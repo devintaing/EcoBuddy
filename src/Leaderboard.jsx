@@ -24,7 +24,7 @@ const Leaderboard = () => {
       <ol className="w-full max-w-md space-y-2">
         {rows.map((r, idx) => (
           <li key={r.id} className="flex justify-between px-4 py-3 rounded border">
-            <span>{idx + 1}. {r.displayName || r.email || r.id}</span>
+            <span>{idx + 1}. {r.anonymous ? 'Username Hidden' : (r.displayName)}</span>
             <span className="font-semibold">{r.totalPoints ?? 0} pts</span>
           </li>
         ))}
