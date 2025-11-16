@@ -17,6 +17,8 @@ const ActionLog = () => {
   const [activities, setActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [activitiesError, setActivitiesError] = useState(null);
+  const [calculatingCarbon, setCalulatingCarbon] = useState(false);
+
 
      // Load user activities
     useEffect(() => {
@@ -59,6 +61,13 @@ const ActionLog = () => {
           });
 
 
+          // Fetch the created document
+          const newDocSnap = await getDoc(docRef);
+          const newActivity = { id: docRef.id, ...newDocSnap.data() };
+
+          setActivities(prev => [...prev, newActivity]); // append to array
+
+
       } catch (err) {
           console.error("Failed to create test activity", err);
       }
@@ -66,6 +75,7 @@ const ActionLog = () => {
 
 
   const logAction = async() => {
+    setCalulatingCarbon(true);
     const ai = new GoogleGenAI({apiKey: apiKey}); // Replace with your API key
 
     const contents = [
@@ -84,6 +94,7 @@ const ActionLog = () => {
     // inside of content is an array of parts. parts is a hash
     setCarbonSaved(response.candidates[0].content.parts[0].text);
     createActivity(response.candidates[0].content.parts[0].text);
+    setCalulatingCarbon(false);
   }
 
   return (
@@ -99,12 +110,14 @@ const ActionLog = () => {
       />
 
       <button onClick={ () => logAction() } className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded whitespace-nowrap">
-        Calculate Carbon Saved
+        {calculatingCarbon && "Calculating Carbon..." }
+        {!calculatingCarbon && "Calculate Carbon Saved" }
       </button>
     </div>
+    
+      {calculatingCarbon && <p>Calculating Carbon...</p>}
+      {!calculatingCarbon && <p>Carbon Saved: {carbonSaved} pounds</p>}
 
-
-      <p>Carbon Saved: {carbonSaved} pounds</p>
       <button onClick={() => navigate('/home')}>
         Back to Home
       </button>
