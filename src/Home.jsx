@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from './firebaseConfig.js'
-import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit } from 'firebase/firestore'
+import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit, doc } from 'firebase/firestore'
 
 const featureCards = [
   {
@@ -33,7 +33,7 @@ const featureCards = [
 
 const metrics = [
   { label: 'Current streak', value: 'No streak yet' },
-  { label: 'Weekly points', value: '0 pts logged' },
+  { label: 'Total points', value: '0 pts logged' },
   { label: 'CO₂ saved', value: '0 lbs CO₂e' },
 ]
 
@@ -64,6 +64,8 @@ const Home = () => {
   const [userName, setUserName] = useState('EcoBuddy friend')
   const [recentActions, setRecentActions] = useState([])
   const [recentLoading, setRecentLoading] = useState(true)
+  const [totalPoints, setTotalPoints] = useState(0)
+  const [loadingTotalPoints, setLoadingTotalPoints] = useState(true)
 
   // map each action type to an emoji
   const getActionEmoji = (actionType) => {
@@ -106,6 +108,28 @@ const Home = () => {
       }
 
       try {
+        setLoadingTotalPoints(true)
+        const userRef = doc(db, 'users', currentUser.uid)
+        const userUnsub = onSnapshot(userRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data() || {}
+            setTotalPoints(data.totalPoints ?? 0)
+          } else {
+            setTotalPoints(0)
+          }
+          setLoadingTotalPoints(false)
+        }, (err) => {
+          console.error('User doc listener error', err)
+          setLoadingTotalPoints(false)
+        })
+
+        unsubscribe._userUnsub = userUnsub
+      } catch (err) {
+        console.error('Failed to attach user doc listener', err)
+        setLoadingTotalPoints(false)
+      }
+
+      try {
         setRecentLoading(true)
         const activitiesRef = collection(db, 'users', currentUser.uid, 'activities')
         const q = query(activitiesRef, orderBy('CreatedAt', 'desc'), limit(3))
@@ -144,6 +168,9 @@ const Home = () => {
     return () => {
       if (unsubscribe && typeof unsubscribe._snapUnsub === 'function') {
         try { unsubscribe._snapUnsub() } catch (e) {}
+      }
+      if (unsubscribe && typeof unsubscribe._userUnsub === 'function') {
+        try { unsubscribe._userUnsub() } catch (e) {}
       }
       unsubscribe()
     }
@@ -239,7 +266,7 @@ const Home = () => {
               {metrics.map((metric) => (
                 <div key={metric.label} className="rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-sm">
                   <p className="text-xs uppercase tracking-[0.2em] text-ink/50">{metric.label}</p>
-                  <p className="mt-1 text-sm font-semibold text-leaf-700">{metric.value}</p>
+                  <p className="mt-1 text-sm font-semibold text-leaf-700">{metric.label === 'Total points' ? (loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`) : metric.value}</p>
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig.js'
 
 function Profile() {
@@ -69,6 +69,8 @@ function Profile() {
                                         CreatedAt: serverTimestamp(),
                                         ActionType: 'Test'
                                     });
+                                    const userRef = doc(db, 'users', user.uid);
+                                    await setDoc(userRef, { totalPoints: increment(10) }, { merge: true });
                                     setCreateSuccess(`Created activity ${docRef.id}`);
                                 } catch (err) {
                                     console.error('Failed to create test activity', err);
