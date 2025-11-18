@@ -71,6 +71,7 @@ function Profile() {
                                     });
                                     const userRef = doc(db, 'users', user.uid);
                                     await setDoc(userRef, { totalPoints: increment(10) }, { merge: true });
+                                    await setDoc(userRef, { totalCO2Saved: increment(20) }, { merge: true });
                                     setCreateSuccess(`Created activity ${docRef.id}`);
                                 } catch (err) {
                                     console.error('Failed to create test activity', err);

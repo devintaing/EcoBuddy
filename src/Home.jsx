@@ -6,8 +6,8 @@ import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, li
 
 const featureCards = [
   {
-    title: 'Recycle AI',
-    description: 'Upload a photo or item and get fast guidance on how to recycle it responsibly.',
+    title: 'AI Photo Analysis',
+    description: 'Upload a photo or item and get fast guidance on how to recycle or compost it responsibly.',
     icon: '♻️',
     path: '/recycle',
   },
@@ -66,6 +66,8 @@ const Home = () => {
   const [recentLoading, setRecentLoading] = useState(true)
   const [totalPoints, setTotalPoints] = useState(0)
   const [loadingTotalPoints, setLoadingTotalPoints] = useState(true)
+  const [totalCO2, setTotalCO2] = useState(0)
+  const [loadingTotalCO2, setLoadingTotalCO2] = useState(true)
 
   // map each action type to an emoji
   const getActionEmoji = (actionType) => {
@@ -114,13 +116,17 @@ const Home = () => {
           if (snap.exists()) {
             const data = snap.data() || {}
             setTotalPoints(data.totalPoints ?? 0)
+            setTotalCO2(data.totalCO2Saved ?? 0)
           } else {
             setTotalPoints(0)
+            setTotalCO2(0)
           }
           setLoadingTotalPoints(false)
+          setLoadingTotalCO2(false)
         }, (err) => {
           console.error('User doc listener error', err)
           setLoadingTotalPoints(false)
+          setLoadingTotalCO2(false)
         })
 
         unsubscribe._userUnsub = userUnsub
@@ -266,7 +272,15 @@ const Home = () => {
               {metrics.map((metric) => (
                 <div key={metric.label} className="rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-sm">
                   <p className="text-xs uppercase tracking-[0.2em] text-ink/50">{metric.label}</p>
-                  <p className="mt-1 text-sm font-semibold text-leaf-700">{metric.label === 'Total points' ? (loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`) : metric.value}</p>
+                  <p className="mt-1 text-sm font-semibold text-leaf-700">
+                    {metric.label === 'Total points' ? (
+                      loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`
+                    ) : metric.label === 'CO₂ saved' ? (
+                      loadingTotalCO2 ? 'Loading...' : `${totalCO2 ?? 0} lbs CO₂e`
+                    ) : (
+                      metric.value
+                    )}
+                  </p>
                 </div>
               ))}
             </div>
