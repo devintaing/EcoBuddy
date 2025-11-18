@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from './firebaseConfig.js'
-import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit, doc } from 'firebase/firestore'
+import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit, doc, runTransaction } from 'firebase/firestore'
 
 const featureCards = [
   {
@@ -136,6 +136,30 @@ const Home = () => {
         })
 
         unsubscribe._userUnsub = userUnsub
+        // update the user's streak on login if needed
+        try {
+          await runTransaction(db, async (transaction) => {
+            const uSnap = await transaction.get(userRef)
+            if (!uSnap.exists()) return
+            const data = uSnap.data() || {}
+            const prevLast = data.lastUpdated
+            const prevStreak = data.streak || 0
+
+            if (!prevLast || typeof prevLast.toDate !== 'function') return
+
+            const lastDate = prevLast.toDate()
+            const nowDate = new Date()
+            const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate())
+            const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
+            const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000))
+
+            if (daysDiff > 1 && prevStreak !== 0) {
+              transaction.update(userRef, { streak: 0 })
+            }
+          })
+        } catch (err) {
+          console.warn('Failed to validate/reset streak on login', err)
+        }
       } catch (err) {
         console.error('Failed to attach user doc listener', err)
         setLoadingTotalPoints(false)
@@ -284,7 +308,7 @@ const Home = () => {
                     ) : metric.label === 'CO₂ saved' ? (
                       loadingTotalCO2 ? 'Loading...' : `${totalCO2 ?? 0} lbs CO₂e`
                     ) : metric.label === 'Current streak' ? (
-                      loadingStreak ? 'Loading...' : (streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : 'No streak yet')
+                      loadingStreak ? 'Loading...' : `${streak ?? 0} day${(streak ?? 0) === 1 ? '' : 's'}`
                     ) : (
                       metric.value
                     )}
