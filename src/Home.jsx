@@ -68,6 +68,8 @@ const Home = () => {
   const [loadingTotalPoints, setLoadingTotalPoints] = useState(true)
   const [totalCO2, setTotalCO2] = useState(0)
   const [loadingTotalCO2, setLoadingTotalCO2] = useState(true)
+  const [streak, setStreak] = useState(0)
+  const [loadingStreak, setLoadingStreak] = useState(true)
 
   // map each action type to an emoji
   const getActionEmoji = (actionType) => {
@@ -117,16 +119,20 @@ const Home = () => {
             const data = snap.data() || {}
             setTotalPoints(data.totalPoints ?? 0)
             setTotalCO2(data.totalCO2Saved ?? 0)
+            setStreak(data.streak ?? 0)
           } else {
             setTotalPoints(0)
             setTotalCO2(0)
+            setStreak(0)
           }
           setLoadingTotalPoints(false)
           setLoadingTotalCO2(false)
+          setLoadingStreak(false)
         }, (err) => {
           console.error('User doc listener error', err)
           setLoadingTotalPoints(false)
           setLoadingTotalCO2(false)
+          setLoadingStreak(false)
         })
 
         unsubscribe._userUnsub = userUnsub
@@ -277,6 +283,8 @@ const Home = () => {
                       loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`
                     ) : metric.label === 'CO₂ saved' ? (
                       loadingTotalCO2 ? 'Loading...' : `${totalCO2 ?? 0} lbs CO₂e`
+                    ) : metric.label === 'Current streak' ? (
+                      loadingStreak ? 'Loading...' : (streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : 'No streak yet')
                     ) : (
                       metric.value
                     )}
