@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from './firebaseConfig.js'
-import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit, doc } from 'firebase/firestore'
+import { collection, getDocs, getCountFromServer, onSnapshot, query, orderBy, limit, doc, runTransaction } from 'firebase/firestore'
 
 const featureCards = [
   {
-    title: 'Recycle AI',
-    description: 'Upload a photo or item and get fast guidance on how to recycle it responsibly.',
+    title: 'AI Photo Analysis',
+    description: 'Upload a photo or item and get fast guidance on how to recycle or compost it responsibly.',
     icon: '♻️',
     path: '/recycle',
   },
@@ -66,6 +66,10 @@ const Home = () => {
   const [recentLoading, setRecentLoading] = useState(true)
   const [totalPoints, setTotalPoints] = useState(0)
   const [loadingTotalPoints, setLoadingTotalPoints] = useState(true)
+  const [totalCO2, setTotalCO2] = useState(0)
+  const [loadingTotalCO2, setLoadingTotalCO2] = useState(true)
+  const [streak, setStreak] = useState(0)
+  const [loadingStreak, setLoadingStreak] = useState(true)
 
   // map each action type to an emoji
   const getActionEmoji = (actionType) => {
@@ -114,16 +118,48 @@ const Home = () => {
           if (snap.exists()) {
             const data = snap.data() || {}
             setTotalPoints(data.totalPoints ?? 0)
+            setTotalCO2(data.totalCO2Saved ?? 0)
+            setStreak(data.streak ?? 0)
           } else {
             setTotalPoints(0)
+            setTotalCO2(0)
+            setStreak(0)
           }
           setLoadingTotalPoints(false)
+          setLoadingTotalCO2(false)
+          setLoadingStreak(false)
         }, (err) => {
           console.error('User doc listener error', err)
           setLoadingTotalPoints(false)
+          setLoadingTotalCO2(false)
+          setLoadingStreak(false)
         })
 
         unsubscribe._userUnsub = userUnsub
+        // update the user's streak on login if needed
+        try {
+          await runTransaction(db, async (transaction) => {
+            const uSnap = await transaction.get(userRef)
+            if (!uSnap.exists()) return
+            const data = uSnap.data() || {}
+            const prevLast = data.lastUpdated
+            const prevStreak = data.streak || 0
+
+            if (!prevLast || typeof prevLast.toDate !== 'function') return
+
+            const lastDate = prevLast.toDate()
+            const nowDate = new Date()
+            const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate())
+            const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
+            const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000))
+
+            if (daysDiff > 1 && prevStreak !== 0) {
+              transaction.update(userRef, { streak: 0 })
+            }
+          })
+        } catch (err) {
+          console.warn('Failed to validate/reset streak on login', err)
+        }
       } catch (err) {
         console.error('Failed to attach user doc listener', err)
         setLoadingTotalPoints(false)
@@ -266,7 +302,17 @@ const Home = () => {
               {metrics.map((metric) => (
                 <div key={metric.label} className="rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-sm">
                   <p className="text-xs uppercase tracking-[0.2em] text-ink/50">{metric.label}</p>
-                  <p className="mt-1 text-sm font-semibold text-leaf-700">{metric.label === 'Total points' ? (loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`) : metric.value}</p>
+                  <p className="mt-1 text-sm font-semibold text-leaf-700">
+                    {metric.label === 'Total points' ? (
+                      loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`
+                    ) : metric.label === 'CO₂ saved' ? (
+                      loadingTotalCO2 ? 'Loading...' : `${totalCO2 ?? 0} lbs CO₂e`
+                    ) : metric.label === 'Current streak' ? (
+                      loadingStreak ? 'Loading...' : `${streak ?? 0} day${(streak ?? 0) === 1 ? '' : 's'}`
+                    ) : (
+                      metric.value
+                    )}
+                  </p>
                 </div>
               ))}
             </div>

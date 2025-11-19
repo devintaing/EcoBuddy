@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment, runTransaction } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig.js'
 
 function Profile() {
@@ -52,7 +52,6 @@ function Profile() {
         <div>
             <h2>Welcome, {user.displayName || user.email}!</h2>
             <p>User ID: {user.uid}</p>
-
                     <div style={{ margin: '12px 0' }}>
                         <button
                             onClick={async () => {
@@ -69,8 +68,56 @@ function Profile() {
                                         CreatedAt: serverTimestamp(),
                                         ActionType: 'Test'
                                     });
+
                                     const userRef = doc(db, 'users', user.uid);
-                                    await setDoc(userRef, { totalPoints: increment(10) }, { merge: true });
+
+                                    await runTransaction(db, async (transaction) => {
+                                        const userSnap = await transaction.get(userRef);
+                                        const prev = userSnap.exists() ? userSnap.data() : {};
+
+                                        const prevLast = prev.lastUpdated;
+                                        const prevStreak = prev.streak || 0;
+
+                                        // compute days between prevLast and now
+                                        let newStreak = 1;
+                                        if (prevLast && typeof prevLast.toDate === 'function') {
+                                            const lastDate = prevLast.toDate();
+                                            const nowDate = new Date();
+                                            const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+                                            const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+                                            const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000));
+
+                                            if (daysDiff === 0) {
+                                                // already logged today — keep the current streak
+                                                newStreak = prevStreak || 1;
+                                            } else if (daysDiff === 1) {
+                                                // consecutive day
+                                                newStreak = (prevStreak || 0) + 1;
+                                            } else {
+                                                // gap — reset
+                                                newStreak = 1;
+                                            }
+                                        } else {
+                                            newStreak = 1;
+                                        }
+
+                                        if (userSnap.exists()) {
+                                            transaction.update(userRef, {
+                                                totalPoints: (prev.totalPoints || 0) + 10,
+                                                totalCO2Saved: (prev.totalCO2Saved || 0) + 20,
+                                                streak: newStreak,
+                                                lastUpdated: serverTimestamp()
+                                            });
+                                        } else {
+                                            transaction.set(userRef, {
+                                                totalPoints: 10,
+                                                totalCO2Saved: 20,
+                                                streak: newStreak,
+                                                lastUpdated: serverTimestamp()
+                                            }, { merge: true });
+                                        }
+                                    });
+
                                     setCreateSuccess(`Created activity ${docRef.id}`);
                                 } catch (err) {
                                     console.error('Failed to create test activity', err);
