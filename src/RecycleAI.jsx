@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
+import { useAuthListener } from "./hooks/useAuthListener";
+import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { db } from './firebaseConfig.js'
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const RecycleAI = () => {
@@ -27,6 +30,8 @@ const RecycleAI = () => {
       ]
     }`
   
+  const { user } = useAuthListener();
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
 
@@ -69,6 +74,48 @@ const RecycleAI = () => {
       // setResult(response.candidates[0].content.parts[0].text);
       setAnalysisResult(parsedResponse);
       setInitialText(null); // Clear loading/initial text
+
+      // If a user is signed in, update their streak
+      if (user) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          await runTransaction(db, async (transaction) => {
+            const uSnap = await transaction.get(userRef);
+            const prev = uSnap.exists() ? uSnap.data() : {};
+
+            const prevLast = prev.lastUpdated;
+            const prevStreak = prev.streak || 0;
+
+            // compute days between prevLast and now
+            let newStreak = 1;
+            if (prevLast && typeof prevLast.toDate === 'function') {
+              const lastDate = prevLast.toDate();
+              const nowDate = new Date();
+              const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+              const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+              const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000));
+
+              if (daysDiff === 0) {
+                newStreak = prevStreak || 1;
+              } else if (daysDiff === 1) {
+                newStreak = (prevStreak || 0) + 1;
+              } else {
+                newStreak = 1;
+              }
+            } else {
+              newStreak = 1;
+            }
+
+            if (uSnap.exists()) {
+              transaction.update(userRef, { streak: newStreak, lastUpdated: serverTimestamp() });
+            } else {
+              transaction.set(userRef, { streak: newStreak, lastUpdated: serverTimestamp() }, { merge: true });
+            }
+          });
+        } catch (err) {
+          console.warn('Failed to update streak after image upload', err);
+        }
+      }
     }
     catch (error){
       console.error("Analysis Error:", error);
