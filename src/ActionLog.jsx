@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { doc, getDoc, getDocs, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, addDoc, serverTimestamp, setDoc, runTransaction } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig.js'
 import { useAuthListener } from "./hooks/useAuthListener";
 
@@ -54,7 +54,7 @@ const ActionLog = () => {
           const activitiesRef = collection(db, "users", user.uid, "activities");
           const docRef = await addDoc(activitiesRef, {
               Action: action,
-              Points: carbon,
+              Points: 10,
               CarbonSaved: carbon,
               CreatedAt: serverTimestamp(),
               ActionType: "Test",
@@ -66,6 +66,58 @@ const ActionLog = () => {
           const newActivity = { id: docRef.id, ...newDocSnap.data() };
 
           setActivities(prev => [...prev, newActivity]); // append to array
+
+          // Update totals, streak and lastUpdated in a transaction
+          try {
+            const userRef = doc(db, 'users', user.uid);
+            const carbonNum = Number(carbon) || 0;
+
+            await runTransaction(db, async (transaction) => {
+              const uSnap = await transaction.get(userRef);
+              const prev = uSnap.exists() ? uSnap.data() : {};
+
+              const prevLast = prev.lastUpdated;
+              const prevStreak = prev.streak || 0;
+
+              // compute days between prevLast and now
+              let newStreak = 1;
+              if (prevLast && typeof prevLast.toDate === 'function') {
+                const lastDate = prevLast.toDate();
+                const nowDate = new Date();
+                const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+                const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+                const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000));
+
+                if (daysDiff === 0) {
+                  newStreak = prevStreak || 1;
+                } else if (daysDiff === 1) {
+                  newStreak = (prevStreak || 0) + 1;
+                } else {
+                  newStreak = 1;
+                }
+              } else {
+                newStreak = 1;
+              }
+
+              if (uSnap.exists()) {
+                transaction.update(userRef, {
+                  totalPoints: (prev.totalPoints || 0) + 10,
+                  totalCO2Saved: (prev.totalCO2Saved || 0) + carbonNum,
+                  streak: newStreak,
+                  lastUpdated: serverTimestamp()
+                });
+              } else {
+                transaction.set(userRef, {
+                  totalPoints: 10,
+                  totalCO2Saved: carbonNum,
+                  streak: newStreak,
+                  lastUpdated: serverTimestamp()
+                }, { merge: true });
+              }
+            });
+          } catch (err) {
+            console.warn('Failed to update user totals/streak after creating activity', err);
+          }
 
 
       } catch (err) {
