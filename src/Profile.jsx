@@ -1,48 +1,46 @@
-import React, { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment, runTransaction } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import { useAuthListener } from "./hooks/useAuthListener";
+import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment, runTransaction, getDocs } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig.js'
 
 function Profile() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [userDoc, setUserDoc] = useState(null);
-    const [error, setError] = useState(null);
+    const { user, userDoc, loading, error } = useAuthListener();
     const [creating, setCreating] = useState(false);
     const [createError, setCreateError] = useState(null);
     const [createSuccess, setCreateSuccess] = useState(null);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+    // Activities state
+    const [activities, setActivities] = useState([]);
+    const [activitiesLoading, setActivitiesLoading] = useState(true);
+    const [activitiesError, setActivitiesError] = useState(null);
 
-            if (!currentUser) {
-                setUserDoc(null);
-                setLoading(false);
-                return;
-            }
+    // Load user activities
+    useEffect(() => {
+        if (!user) return;
+
+        async function fetchActivities() {
+            setActivitiesLoading(true);
 
             try {
-                // Read the Firestore document at /users/{uid}
-                const userRef = doc(db, 'users', currentUser.uid);
-                const userSnap = await getDoc(userRef);
+                const activitiesRef = collection(db, "users", user.uid, "activities");
+                const snapshot = await getDocs(activitiesRef);
 
-                if (userSnap.exists()) {
-                    setUserDoc({ id: userSnap.id, ...userSnap.data() });
-                } else {
-                    // Document does not exist
-                    setUserDoc(null);
-                }
+                const list = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+
+                setActivities(list);
             } catch (err) {
-                console.error('Failed to fetch user document:', err);
-                setError(err);
+                console.error("Failed to load activities:", err);
+                setActivitiesError(err);
             } finally {
-                setLoading(false);
+                setActivitiesLoading(false);
             }
-        });
+        }
 
-        return () => unsubscribe();
-    }, []);
+        fetchActivities();
+    }, [user]);
 
     if (loading) return <p>Loading user data...</p>;
 
@@ -132,7 +130,24 @@ function Profile() {
                         </button>
                     </div>
 
-            {error && <p style={{ color: 'red' }}>Error loading profile: {error.message}</p>}
+            <hr />
+
+            <h3>Your Activities</h3>
+
+            {activitiesLoading && <p>Loading activities...</p>}
+            {activitiesError && <p style={{ color: "red" }}>{activitiesError.message}</p>}
+
+            {!activitiesLoading && activities.length === 0 && (
+                <p>You have no activities yet.</p>
+            )}
+
+            <ul>
+                {activities.map((a) => (
+                    <li key={a.id}>
+                        <strong>{a.Action}</strong> — {a.Points} pts — Saved {a.CarbonSaved}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
