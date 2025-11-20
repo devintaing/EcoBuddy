@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
-import { db } from "./firebaseConfig";
 import { useAuthListener } from "./hooks/useAuthListener";
-import React, { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp, setDoc, increment, runTransaction, getDocs } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig.js'
 
 function Profile() {
