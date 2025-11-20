@@ -1,15 +1,81 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import { doc, getDoc, getDocs, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from './firebaseConfig.js'
+import { useAuthListener } from "./hooks/useAuthListener";
+
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const ActionLog = () => {
+  const { user, userDoc, loading, error } = useAuthListener();
   const [action, setAction] = useState("");
   const [carbonSaved, setCarbonSaved] = useState(0);
   const navigate = useNavigate();
 
+  const [activities, setActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [activitiesError, setActivitiesError] = useState(null);
+  const [calculatingCarbon, setCalulatingCarbon] = useState(false);
+
+
+     // Load user activities
+    useEffect(() => {
+        if (!user) return;
+
+        async function fetchActivities() {
+            setActivitiesLoading(true);
+
+            try {
+                const activitiesRef = collection(db, "users", user.uid, "activities");
+                const snapshot = await getDocs(activitiesRef);
+
+                const list = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+
+                setActivities(list);
+            } catch (err) {
+                console.error("Failed to load activities:", err);
+                setActivitiesError(err);
+            } finally {
+                setActivitiesLoading(false);
+            }
+
+        }
+
+        fetchActivities();
+    }, [user]);
+
+  const createActivity = async (carbon) => {
+      try {
+          const activitiesRef = collection(db, "users", user.uid, "activities");
+          const docRef = await addDoc(activitiesRef, {
+              Action: action,
+              Points: carbon,
+              CarbonSaved: carbon,
+              CreatedAt: serverTimestamp(),
+              ActionType: "Test",
+          });
+
+
+          // Fetch the created document
+          const newDocSnap = await getDoc(docRef);
+          const newActivity = { id: docRef.id, ...newDocSnap.data() };
+
+          setActivities(prev => [...prev, newActivity]); // append to array
+
+
+      } catch (err) {
+          console.error("Failed to create test activity", err);
+      }
+    };
+
+
   const logAction = async() => {
+    setCalulatingCarbon(true);
     const ai = new GoogleGenAI({apiKey: apiKey}); // Replace with your API key
 
     const contents = [
@@ -27,6 +93,8 @@ const ActionLog = () => {
     // each item in candidates has a hash called content, and content is a hash too
     // inside of content is an array of parts. parts is a hash
     setCarbonSaved(response.candidates[0].content.parts[0].text);
+    createActivity(response.candidates[0].content.parts[0].text);
+    setCalulatingCarbon(false);
   }
 
   return (
@@ -42,17 +110,31 @@ const ActionLog = () => {
       />
 
       <button onClick={ () => logAction() } className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded whitespace-nowrap">
-        Calculate Carbon Saved
+        {calculatingCarbon && "Calculating Carbon..." }
+        {!calculatingCarbon && "Calculate Carbon Saved" }
       </button>
     </div>
+    
+      {calculatingCarbon && <p>Calculating Carbon...</p>}
+      {!calculatingCarbon && <p>Carbon Saved: {carbonSaved} pounds</p>}
 
-
-      <p>Carbon Saved: {carbonSaved} pounds</p>
       <button onClick={() => navigate('/home')}>
         Back to Home
       </button>
+      
+      <h1>Your Actions</h1>
+      <ul>
+          {activities.map((a) => (
+              <li key={a.id}>
+                  <strong>{a.Action}</strong> — {a.Points} pts — Saved {a.CarbonSaved}
+              </li>
+          ))}
+      </ul>
     </div>
+
   );
+
+
 };
 
 export default ActionLog;
