@@ -18,6 +18,7 @@ const ActionLog = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [activitiesError, setActivitiesError] = useState(null);
   const [calculatingCarbon, setCalulatingCarbon] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
 
      // Load user activities
@@ -178,7 +179,52 @@ const ActionLog = () => {
       <ul>
           {activities.map((a) => (
               <li key={a.id}>
-                  <strong>{a.Action}</strong> — {a.Points} pts — Saved {a.CarbonSaved}
+                <strong>{a.Action}</strong> — {a.Points} pts — Saved {a.CarbonSaved}
+                <button
+                  onClick={async () => {
+                    if (!user) return;
+                    if (!confirm('Delete this activity? This will remove its points and CO₂ from your totals.')) return;
+                    setDeletingId(a.id);
+                    try {
+                      const activityRef = doc(db, 'users', user.uid, 'activities', a.id);
+                      const userRef = doc(db, 'users', user.uid);
+
+                      await runTransaction(db, async (transaction) => {
+                        const actSnap = await transaction.get(activityRef);
+                        if (!actSnap.exists()) return;
+                        const act = actSnap.data() || {};
+                        const pts = Number(act.Points) || 0;
+                        const carbon = Number(act.CarbonSaved) || 0;
+
+                        const uSnap = await transaction.get(userRef);
+                        const prev = uSnap.exists() ? uSnap.data() : {};
+
+                        transaction.delete(activityRef);
+
+                        const newPoints = Math.max(0, (prev.totalPoints || 0) - pts);
+                        const newCO2 = Math.max(0, (prev.totalCO2Saved || 0) - carbon);
+
+                        if (uSnap.exists()) {
+                          transaction.update(userRef, { totalPoints: newPoints, totalCO2Saved: newCO2 });
+                        } else {
+                          transaction.set(userRef, { totalPoints: newPoints, totalCO2Saved: newCO2 }, { merge: true });
+                        }
+                      });
+
+                      // remove from local list
+                      setActivities((prev) => prev.filter((it) => it.id !== a.id));
+                    } catch (err) {
+                      console.error('Failed to delete activity', err);
+                      setActivitiesError(err);
+                    } finally {
+                      setDeletingId(null);
+                    }
+                  }}
+                  disabled={deletingId === a.id}
+                  className="ml-3 inline-block rounded bg-red-50 px-2 py-1 text-xs text-red-700 border border-red-100 hover:bg-red-100"
+                >
+                  {deletingId === a.id ? 'Deleting…' : 'Delete'}
+                </button>
               </li>
           ))}
       </ul>
