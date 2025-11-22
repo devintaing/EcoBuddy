@@ -71,15 +71,8 @@ const Home = () => {
   const [streak, setStreak] = useState(0)
   const [loadingStreak, setLoadingStreak] = useState(true)
 
-  // map each action type to an emoji
-  const getActionEmoji = (actionType) => {
-    const t = (actionType || '').toString().toLowerCase()
-    if (t.includes('compost')) return '🌿'
-    if (t.includes('recycle')) return '♻️'
-    if (t.includes('trash') || t.includes('landfill') || t.includes('garbage')) return '🗑️'
-    if (t.includes('test')) return '🧪'
-    return '♻️'
-  }
+  // map each action type to an emoji (WIP)
+  const getActionEmoji = () => '🍃'
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -229,14 +222,14 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-ivory">
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
-        <section className="rounded-3xl border border-line bg-white/80 px-6 py-10 shadow-lg backdrop-blur-sm sm:px-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <section className="rounded-3xl bg-gradient-to-r from-fern-300/50 via-white to-leaf-600/10 px-6 py-12 shadow-xl shadow-black/5 backdrop-blur-sm sm:px-12">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <LeafLogo className="h-12 w-12 text-leaf-600" />
-                <span className="text-2xl font-semibold text-ink">EcoBuddy</span>
+              <div className="flex items-center gap-3 text-leaf-700">
+                <LeafLogo className="h-12 w-12" />
+                <span className="text-sm font-semibold uppercase tracking-[0.25em]">EcoBuddy</span>
               </div>
-              <p className="text-sm uppercase tracking-[0.2em] text-leaf-700">Today&apos;s impact</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-leaf-700">Today&apos;s impact</p>
               <h1 className="text-4xl font-serif text-ink sm:text-5xl">Welcome back, {userName}</h1>
               <p className="max-w-2xl text-ink/75">
                   {loadingCount ? (
@@ -252,7 +245,7 @@ const Home = () => {
                   )}
               </p>
               <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={handleNavigate('/settings')} className={buttonStyles.ghost}>
+                <button type="button" onClick={handleNavigate('/settings')} className="inline-flex items-center justify-center rounded-full border border-line bg-white px-5 py-2 text-sm font-medium text-ink/80 transition-all hover:border-leaf-600 hover:bg-leaf-50 hover:text-leaf-700 hover:shadow-md cursor-pointer">
                   Settings
                 </button>
               </div>
@@ -272,7 +265,7 @@ const Home = () => {
             {cards.map((card) => (
               <article
                 key={card.title}
-                className="group flex flex-col rounded-3xl border border-line bg-white/80 p-6 shadow-md backdrop-blur-sm transition hover:-translate-y-1 hover:border-leaf-600/60 hover:shadow-xl"
+                className="group flex flex-col rounded-3xl bg-white p-6 shadow-sm shadow-black/5 transition hover:-translate-y-2 hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl" aria-hidden="true">
@@ -281,38 +274,45 @@ const Home = () => {
                   <h3 className="text-xl font-semibold text-ink">{card.title}</h3>
                 </div>
                 <p className="mt-3 flex-1 text-sm text-ink/70">{card.description}</p>
-                <button
-                  type="button"
-                  onClick={handleNavigate(card.path)}
-                  className="mt-6 self-start inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-4 py-2 text-sm font-medium text-ink/80 transition-all hover:border-leaf-600 hover:bg-leaf-600/10 hover:text-leaf-700 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/60 active:translate-y-0 cursor-pointer"
-                >
-                  Go
-                  <span aria-hidden="true">→</span>
-                </button>
+                <div className="mt-6 flex">
+                  <button
+                    type="button"
+                    onClick={handleNavigate(card.path)}
+                    className="inline-flex items-center gap-2 rounded-full border border-line bg-ivory px-4 py-2 text-sm font-semibold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-leaf-200 hover:bg-fern-300/30 hover:text-leaf-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-leaf-300/60 cursor-pointer"
+                  >
+                    Go →
+                  </button>
+                </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-12 rounded-3xl border border-line bg-white/80 p-6 shadow-md backdrop-blur-sm">
+        <section className="mt-12">
           <div className="space-y-4">
             <h2 className="text-2xl font-serif text-ink">Your Progress</h2>
             <p className="text-sm text-ink/70">Log an action to unlock streaks, weekly points, and CO₂ insights.</p>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid gap-6 sm:grid-cols-3">
               {metrics.map((metric) => (
-                <div key={metric.label} className="rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.2em] text-ink/50">{metric.label}</p>
-                  <p className="mt-1 text-sm font-semibold text-leaf-700">
-                    {metric.label === 'Total points' ? (
-                      loadingTotalPoints ? 'Loading...' : `${totalPoints ?? 0} pts`
-                    ) : metric.label === 'CO₂ saved' ? (
-                      loadingTotalCO2 ? 'Loading...' : `${totalCO2 ?? 0} lbs CO₂e`
-                    ) : metric.label === 'Current streak' ? (
-                      loadingStreak ? 'Loading...' : `${streak ?? 0} day${(streak ?? 0) === 1 ? '' : 's'}`
-                    ) : (
-                      metric.value
-                    )}
-                  </p>
+                <div key={metric.label} className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm shadow-black/5">
+                  <p className="text-xs uppercase tracking-[0.2em] text-leaf-700 opacity-70">{metric.label}</p>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="font-serif text-4xl text-ink">
+                      {metric.label === 'Total points' ? (
+                        loadingTotalPoints ? '—' : totalPoints ?? 0
+                      ) : metric.label === 'CO₂ saved' ? (
+                        loadingTotalCO2 ? '—' : Number(totalCO2 ?? 0).toFixed(1)
+                      ) : metric.label === 'Current streak' ? (
+                        loadingStreak ? '—' : streak ?? 0
+                      ) : (
+                        metric.value
+                      )}
+                    </span>
+                    <span className="text-sm font-medium text-ink/40">
+                      {metric.label === 'Total points' ? 'pts' : metric.label === 'CO₂ saved' ? 'lbs' : metric.label === 'Current streak' ? 'days' : ''}
+                    </span>
+                  </div>
+                  <div className="pointer-events-none absolute -bottom-6 -right-6 h-28 w-28 rounded-full bg-fern-50" />
                 </div>
               ))}
             </div>
@@ -320,26 +320,33 @@ const Home = () => {
         </section>
 
         <section className="mt-12 grid gap-6 lg:grid-cols-[3fr_2fr]">
-          <div className="rounded-3xl border border-line bg-white/90 p-6 shadow-lg backdrop-blur-md">
+          <div className="rounded-3xl bg-white p-6 shadow-xl shadow-black/5 backdrop-blur-md">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-2xl text-ink">Recent Eco-Actions</h2>
             </div>
-            <ul className="mt-6 space-y-4">
+            <ul className="mt-6 divide-y divide-gray-100">
               {recentLoading ? (
                 <li className="rounded-2xl border border-dashed border-line bg-white/70 p-6 text-center text-sm text-ink/70">Loading recent actions…</li>
               ) : recentActions.length === 0 ? (
                 <li className="rounded-2xl border border-dashed border-line bg-white/70 p-6 text-center text-sm text-ink/70">
-                  No actions logged yet. Log your first eco-action to see it appear here.
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <span className="text-2xl" aria-hidden="true">🌱</span>
+                    <p className="font-semibold text-ink">No actions logged yet</p>
+                    <p className="text-xs text-ink/60">Start with your first eco-action to see your streak grow.</p>
+                  </div>
                 </li>
               ) : (
                 recentActions.map((entry) => (
-                  <li key={entry.id} className="flex items-center gap-4 rounded-2xl border border-line bg-white/80 p-4 shadow-sm">
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-4 bg-white/80 p-4 transition hover:bg-ivory/80"
+                  >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ivory text-2xl">
                       <span aria-hidden="true">{getActionEmoji(entry.actionType)}</span>
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-ink">{entry.title}</p>
-                      <p className="text-sm text-ink/60">{entry.time}</p>
+                      <p className="text-xs uppercase tracking-[0.1em] text-ink/60">{entry.time}</p>
                     </div>
                     <span className="rounded-full bg-fern-300/30 px-3 py-1 text-xs font-semibold text-ink">{entry.impact}</span>
                   </li>
@@ -348,12 +355,12 @@ const Home = () => {
             </ul>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-3xl border border-line bg-hero-gradient p-6 text-ink shadow-lg">
+            <div className="rounded-3xl bg-gradient-to-br from-fern-300/40 via-white to-leaf-50 p-6 text-ink shadow-lg shadow-black/5">
               <p className="text-xs uppercase tracking-[0.3em] text-leaf-700">Ask Recycle AI</p>
               <h3 className="mt-3 text-2xl font-serif">Need to check an item?</h3>
               <p className="mt-2 text-m text-ink/80">Snap, upload, and get advice tailored just for you.</p>
             </div>
-            <div className="rounded-3xl border border-line bg-gradient-to-br from-compost-400/80 via-white to-bark-600/20 p-6 text-ink shadow-lg">
+            <div className="rounded-3xl bg-gradient-to-br from-stone-50 via-white to-compost-400/30 p-6 text-ink shadow-lg shadow-black/5">
               <p className="text-xs uppercase tracking-[0.3em] text-bark-600">Compost tips</p>
               <h3 className="mt-3 text-2xl font-serif">Your leftovers can change the planet.</h3>
               <p className="mt-2 text-m text-ink/80">Save veggie scraps, log drop-offs, and compete with neighbors. Compost AI keeps you in the know.</p>
