@@ -295,7 +295,7 @@ const ActionLog = () => {
                           }
                         }}
                         disabled={deletingId === a.id}
-                        className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 shadow-sm shadow-black/5 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 shadow-sm shadow-black/5 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {deletingId === a.id ? 'Deleting…' : 'Delete'}
                       </button>
