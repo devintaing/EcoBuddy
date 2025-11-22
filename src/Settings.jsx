@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { onAuthStateChanged, updateProfile } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { onAuthStateChanged, updateProfile, signOut, deleteUser, reauthenticateWithCredential, EmailAuthProvider, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth'
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch, deleteDoc } from 'firebase/firestore'
 import { auth, db } from './firebaseConfig.js'
 
 const Settings = () => {
@@ -14,6 +14,9 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [anonymous, setAnonymous] = useState(false);
   const [savingAnonymous, setSavingAnonymous] = useState(false);
+  const [deletingData, setDeletingData] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -153,6 +156,82 @@ const Settings = () => {
             </section>
           </div>
         )}
+
+        <section className="mt-6 rounded-3xl border border-line bg-white/90 p-6 shadow-lg">
+          <p className="text-xs uppercase tracking-[0.3em] text-red-600">Danger Zone</p>
+          <h2 className="mt-2 text-xl font-semibold text-ink">Delete all my Firestore data</h2>
+          <p className="mt-1 text-sm text-ink/60">This will permanently delete your user document and activity records stored in Firestore. This cannot be undone.</p>
+          <div className="mt-4">
+            <button
+              onClick={async () => {
+                if (!user) return;
+                const confirmation = window.prompt('Type DELETE to permanently remove your Firestore data for this account.');
+                if (confirmation !== 'DELETE') return;
+                setDeletingData(true);
+                setDeleteError(null);
+                setDeleteSuccess(null);
+                try {
+                  const activitiesRef = collection(db, 'users', user.uid, 'activities');
+                  const snap = await getDocs(activitiesRef);
+                  const docs = snap.docs || [];
+
+                  for (let i = 0; i < docs.length; i += 500) {
+                    const batch = writeBatch(db);
+                    docs.slice(i, i + 500).forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                  }
+
+                  // delete the user document
+                  const userRef = doc(db, 'users', user.uid);
+                  try {
+                    await deleteDoc(userRef);
+                  } catch (err) {
+                    console.warn('Failed to delete user document:', err);
+                  }
+
+                  setDeleteSuccess('Your Firestore data has been deleted. You will be signed out.');
+
+                  // attempt to delete the auth user too
+                  try {
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                      try {
+                        await deleteUser(currentUser);
+                        setDeleteSuccess('Your Firestore data and Authentication account have been deleted.');
+                        navigate('/');
+                        return;
+                      } catch (errAuth) {
+                        console.warn('Initial deleteUser failed.', errAuth);
+
+                        setDeleteSuccess('Your Firestore data was deleted. Please sign out or delete your auth account separately.');
+                        try { await signOut(auth); } catch (e) {}
+                        navigate('/');
+                        return;
+                      }
+                    }
+                  } catch (errAuthOuter) {
+                    console.warn('Failed to delete auth user', errAuthOuter);
+                  }
+
+                  // sign the user out and navigate home if auth deletion didn't occur
+                  try { await signOut(auth); } catch (e) {}
+                  navigate('/');
+                } catch (err) {
+                  console.error('Failed to delete user data:', err);
+                  setDeleteError(err);
+                } finally {
+                  setDeletingData(false);
+                }
+              }}
+              disabled={deletingData}
+              className={`inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ${deletingData ? 'bg-line text-ink/50 border-line' : 'border border-red-600 bg-red-600 text-white hover:bg-red-700'}`}
+            >
+              {deletingData ? 'Deleting…' : 'Delete my Firestore data'}
+            </button>
+            {deleteError && <div className="mt-3 text-sm text-red-700">Error: {deleteError.message}</div>}
+            {deleteSuccess && <div className="mt-3 text-sm text-green-700">{deleteSuccess}</div>}
+          </div>
+        </section>
 
         <div className="flex justify-end">
           <button
