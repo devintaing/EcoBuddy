@@ -290,7 +290,7 @@ const Home = () => {
 
         <section className="mt-12">
           <div className="space-y-4">
-            <h2 className="text-2xl font-serif text-ink">Your Progress</h2>
+          <h2 className="mb-4 font-serif text-2xl text-ink">Your Progress</h2>
             <p className="text-sm text-ink/70">Log an action to unlock streaks, weekly points, and CO₂ insights.</p>
             <div className="grid gap-6 sm:grid-cols-3">
               {metrics.map((metric) => (
