@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { useAuthListener } from "./hooks/useAuthListener";
 import Navbar from './components/Navbar';
+import { doc, collection, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { db } from './firebaseConfig.js'
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -55,6 +57,72 @@ const EcofriendlyRecommendations = () => {
 
       const parsed = JSON.parse(cleanedText);
       setProductRec(parsed);
+
+      // create an activity for this recommendation
+      try {
+        if (user && user.uid) {
+          const activitiesRef = collection(db, 'users', user.uid, 'activities');
+          const docRef = await addDoc(activitiesRef, {
+            Action: `Recommendation: ${parsed.eco_alternative}`,
+            Points: 10,
+            CarbonSaved: 0,
+            CreatedAt: serverTimestamp(),
+            ActionType: 'Recommendation',
+          });
+
+          // Update user totals/streak/lastUpdated in a transaction
+          try {
+            const userRef = doc(db, 'users', user.uid);
+
+            await runTransaction(db, async (transaction) => {
+              const uSnap = await transaction.get(userRef);
+              const prev = uSnap.exists() ? uSnap.data() : {};
+
+              const prevLast = prev.lastUpdated;
+              const prevStreak = prev.streak || 0;
+
+              let newStreak = 1;
+              if (prevLast && typeof prevLast.toDate === 'function') {
+                const lastDate = prevLast.toDate();
+                const nowDate = new Date();
+                const utcLast = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+                const utcNow = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+                const daysDiff = Math.floor((utcNow - utcLast) / (24 * 60 * 60 * 1000));
+
+                if (daysDiff === 0) {
+                  newStreak = prevStreak || 1;
+                } else if (daysDiff === 1) {
+                  newStreak = (prevStreak || 0) + 1;
+                } else {
+                  newStreak = 1;
+                }
+              } else {
+                newStreak = 1;
+              }
+
+              if (uSnap.exists()) {
+                transaction.update(userRef, {
+                  totalPoints: (prev.totalPoints || 0) + 10,
+                  totalCO2Saved: (prev.totalCO2Saved || 0) + 0,
+                  streak: newStreak,
+                  lastUpdated: serverTimestamp(),
+                });
+              } else {
+                transaction.set(userRef, {
+                  totalPoints: 10,
+                  totalCO2Saved: 0,
+                  streak: newStreak,
+                  lastUpdated: serverTimestamp(),
+                }, { merge: true });
+              }
+            });
+          } catch (err) {
+            console.warn('Failed to update user totals/streak after recommendation', err);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to create recommendation activity', err);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to generate recommendation. Please try again.");

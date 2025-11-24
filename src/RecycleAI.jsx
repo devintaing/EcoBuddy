@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
 import { useAuthListener } from "./hooks/useAuthListener";
-import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, runTransaction, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from './firebaseConfig.js'
 import Navbar from './components/Navbar';
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -76,9 +76,23 @@ const RecycleAI = () => {
       setAnalysisResult(parsedResponse);
       setInitialText(null); // Clear loading/initial text
 
-      // If a user is signed in, update their streak
+      // If a user is signed in, create an activity and update totals/streak
       if (user) {
         try {
+          const activitiesRef = collection(db, 'users', user.uid, 'activities');
+          const pts = 10;
+          const carbonSaved = 0;
+          const actionText = `Photo Analysis: ${parsedResponse.main_object}`;
+
+          // create the activity document
+          const docRef = await addDoc(activitiesRef, {
+            Action: actionText,
+            Points: pts,
+            CarbonSaved: carbonSaved,
+            CreatedAt: serverTimestamp(),
+            ActionType: 'Photo'
+          });
+
           const userRef = doc(db, 'users', user.uid);
           await runTransaction(db, async (transaction) => {
             const uSnap = await transaction.get(userRef);
@@ -108,13 +122,23 @@ const RecycleAI = () => {
             }
 
             if (uSnap.exists()) {
-              transaction.update(userRef, { streak: newStreak, lastUpdated: serverTimestamp() });
+              transaction.update(userRef, {
+                totalPoints: (prev.totalPoints || 0) + pts,
+                totalCO2Saved: (prev.totalCO2Saved || 0) + carbonSaved,
+                streak: newStreak,
+                lastUpdated: serverTimestamp()
+              });
             } else {
-              transaction.set(userRef, { streak: newStreak, lastUpdated: serverTimestamp() }, { merge: true });
+              transaction.set(userRef, {
+                totalPoints: pts,
+                totalCO2Saved: carbonSaved,
+                streak: newStreak,
+                lastUpdated: serverTimestamp()
+              }, { merge: true });
             }
           });
         } catch (err) {
-          console.warn('Failed to update streak after image upload', err);
+          console.warn('Failed to create activity/update streak after image upload', err);
         }
       }
     }

@@ -59,7 +59,7 @@ const ActionLog = () => {
               Points: 10,
               CarbonSaved: carbon,
               CreatedAt: serverTimestamp(),
-              ActionType: "Test",
+              ActionType: "Action Logged",
           });
 
 
