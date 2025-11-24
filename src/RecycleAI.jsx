@@ -149,72 +149,89 @@ const RecycleAI = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div>
       <Navbar />
-        
-      <div className="flex flex-col items-center justify-center min-h-screen space-y-8 w-5/6 p-6 bg-gray-50 rounded-lg shadow-xl">
-        {preview && (
-          <div className="flex flex-col items-center space-y-2">
-            <h2 className="text-2xl font-semibold">Image Preview</h2>
-            <img
-              src={preview}
-              alt="Preview"
-              className="max-w-xs rounded-lg shadow-lg border-4 border-gray-300"
-            />
-          </div>
-        )}
-
-        {initialText && (
-            <p className="text-gray-700 text-xl font-medium">{initialText}</p>
-        )}
-
-        {analysisResult && (
-            <div className="w-full max-w-md bg-white p-6 border-2 border-green-700 rounded-lg shadow-2xl space-y-4">
-                <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
-                
-                {/* Object */}
-                <div className="border-l-4 border-green-700 pl-3">
-                    <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
-                    <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
-                </div>
-
-                {/* Category */}
-                <div className="border-l-4 border-green-700 pl-3 pt-3">
-                    <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
-                    <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
-                        {analysisResult.category.toUpperCase()}
-                    </p>
-                </div>
-
-                {/* Instructions */}
-                <div className="pt-3">
-                    <h3 className="text-lg font-semibold text-gray-800 border-t pt-3">📝 Instructions:</h3>
-                    <ul className="list-disc list-inside space-y-2 mt-2 text-gray-700">
-                        {analysisResult.instructions.map((instruction, index) => (
-                            <li key={index} className="text-left font-medium">
-                                {instruction}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+      <div className="min-h-screen bg-ivory px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6">
+          <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/50 px-5 py-4 shadow-lg shadow-black/5 backdrop-blur-md">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-leaf-700">Impact tracker</p>
+              <h1 className="text-3xl font-serif text-ink sm:text-4xl">Photo Recyclability Analysis</h1>
+              <p className="text-xs text-ink/60 sm:text-sm">Upload a photo or item and get fast guidance on how to recycle or compost it responsibly.</p>
             </div>
-        )}
+          </header>
+            <section className="relative flex flex-col items-center rounded-[2rem] bg-white p-10 shadow-xl shadow-black/5">
+              <div className="flex flex-col items-center justify-center min-h-screen space-y-8 w-5/6 p-6">
+                {preview && (
+                  <div className="flex flex-col items-center space-y-2">
+                    <h2 className="text-2xl font-semibold">Image Preview</h2>
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="max-w-xs rounded-lg shadow-lg border-4 border-gray-300"
+                    />
+                  </div>
+                )}
 
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+                {initialText && (
+                  <p className="text-gray-700 text-xl font-medium">{initialText}</p>
+                )}
 
-        <label
-          htmlFor="file-upload"
-          className="text-center bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
-        >
-          Upload Image
-        </label>
+                {analysisResult && (
+                  <div className="w-full max-w-md bg-white p-6 border-2 border-green-700 rounded-lg shadow-2xl space-y-4">
+                    <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
+                    
+                    {/* Object */}
+                    <div className="border-l-4 border-green-700 pl-3">
+                      <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
+                      <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
+                    </div>
+
+                    {/* Category */}
+                    <div className="border-l-4 border-green-700 pl-3 pt-3">
+                      <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
+                      <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
+                        {analysisResult.category.toUpperCase()}
+                      </p>
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="pt-3">
+                      <h3 className="text-lg font-semibold text-gray-800 border-t pt-3">📝 Instructions:</h3>
+                      <ul className="list-disc list-inside space-y-2 mt-2 text-gray-700">
+                        {analysisResult.instructions.map((instruction, index) => (
+                          <li key={index} className="text-left font-medium">
+                            {instruction}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                <label
+                  htmlFor="file-upload"
+                  className="text-center bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+                >
+                  Upload Image
+                </label>
+              </div>
+            </section>
+
+        </div>
       </div>
+
+
+
+      
     </div>
     
   );
