@@ -71,8 +71,13 @@ const Home = () => {
   const [streak, setStreak] = useState(0)
   const [loadingStreak, setLoadingStreak] = useState(true)
 
-  // map each action type to an emoji (WIP)
-  const getActionEmoji = () => '🍃'
+  // map each action type to an emoji
+  const getActionEmoji = (actionType) => {
+    const type = (actionType.toString().toLowerCase())
+    if (type.includes('photo')) return '📸'
+    if (type.includes('logged')) return '📔'
+    return '🍃'
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
