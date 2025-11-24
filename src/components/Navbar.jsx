@@ -31,7 +31,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="w-full bg-gray-50 border-b border-gray-200">
+    <nav className="w-full bg-ivory border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
         <div
           onClick={() => navigate("/home")}
@@ -62,7 +62,7 @@ const Navbar = () => {
         <div className="ml-[5%]">
           <button
             onClick={handleLogout}
-            className="self-start rounded-full border border-line bg-white px-4 py-2 text-sm 
+            className="self-start rounded-full border border-line bg-ivory px-4 py-2 text-sm 
               font-medium text-ink/70 transition-all hover:border-leaf-600 hover:bg-leaf-600/10 
               hover:text-leaf-700 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none 
               focus-visible:ring-4 focus-visible:ring-leaf-300/60 active:translate-y-0 cursor-pointer"

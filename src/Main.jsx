@@ -9,9 +9,9 @@ import RecycleAI from './RecycleAI.jsx';
 import Profile from './Profile.jsx';
 import Home from './Home.jsx';
 import Settings from './Settings.jsx';
-import CompostAI from './CompostAI.jsx';
 import ActionLog from './ActionLog.jsx';
 import Leaderboard from './Leaderboard.jsx';
+import EcofriendlyRecommendations from './EcofriendlyRecommendations.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -24,9 +24,9 @@ createRoot(document.getElementById('root')).render(
         <Route path="/profile" element={<Profile />}  />
         <Route path="/home" element={<Home />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/compost" element={<CompostAI />} />
         <Route path="/action" element={<ActionLog />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/product" element={<EcofriendlyRecommendations />} />
       </Routes>
     </Router>
   </StrictMode>,
