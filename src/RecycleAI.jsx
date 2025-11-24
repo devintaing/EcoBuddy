@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { useAuthListener } from "./hooks/useAuthListener";
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebaseConfig.js'
+import Navbar from './components/Navbar';
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const RecycleAI = () => {
@@ -149,7 +150,7 @@ const RecycleAI = () => {
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <h1 className="text-center text-5xl font-bold">Upload an image to analyze</h1>
+      <Navbar />
         
       <div className="flex flex-col items-center justify-center min-h-screen space-y-8 w-5/6 p-6 bg-gray-50 rounded-lg shadow-xl">
         {preview && (
@@ -171,13 +172,13 @@ const RecycleAI = () => {
             <div className="w-full max-w-md bg-white p-6 border-2 border-green-500 rounded-lg shadow-2xl space-y-4">
                 <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
                 
-                {/* Field 1: Object */}
+                {/* Object */}
                 <div className="border-l-4 border-green-500 pl-3">
                     <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
                     <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
                 </div>
 
-                {/* Field 2: Category */}
+                {/* Category */}
                 <div className="border-l-4 border-green-500 pl-3 pt-3">
                     <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
                     <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
@@ -185,7 +186,7 @@ const RecycleAI = () => {
                     </p>
                 </div>
 
-                {/* Field 3: Instructions */}
+                {/* Instructions */}
                 <div className="pt-3">
                     <h3 className="text-lg font-semibold text-gray-800 border-t pt-3">📝 Instructions:</h3>
                     <ul className="list-disc list-inside space-y-2 mt-2 text-gray-700">
