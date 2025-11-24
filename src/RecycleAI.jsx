@@ -141,7 +141,7 @@ const RecycleAI = () => {
   const getCategoryColor = (category) => {
     switch (category.toLowerCase()) {
         case 'recycle': return 'text-blue-600';
-        case 'compost': return 'text-green-600';
+        case 'compost': return 'text-green-700';
         case 'landfill/trash': return 'text-red-600';
         case 'hazardous waste': return 'text-yellow-600';
         default: return 'text-gray-700';
@@ -169,17 +169,17 @@ const RecycleAI = () => {
         )}
 
         {analysisResult && (
-            <div className="w-full max-w-md bg-white p-6 border-2 border-green-500 rounded-lg shadow-2xl space-y-4">
+            <div className="w-full max-w-md bg-white p-6 border-2 border-green-700 rounded-lg shadow-2xl space-y-4">
                 <h2 className="text-3xl font-bold text-green-700 text-center border-b pb-2">Disposal Guide</h2>
                 
                 {/* Object */}
-                <div className="border-l-4 border-green-500 pl-3">
+                <div className="border-l-4 border-green-700 pl-3">
                     <h3 className="text-lg font-semibold text-gray-800">🗑️ Main Object:</h3>
                     <p className="text-2xl font-extrabold text-gray-900 mt-1">{analysisResult.main_object}</p>
                 </div>
 
                 {/* Category */}
-                <div className="border-l-4 border-green-500 pl-3 pt-3">
+                <div className="border-l-4 border-green-700 pl-3 pt-3">
                     <h3 className="text-lg font-semibold text-gray-800">♻️ Dispose In:</h3>
                     <p className={`text-3xl font-extrabold ${getCategoryColor(analysisResult.category)} mt-1`}>
                         {analysisResult.category.toUpperCase()}
@@ -210,7 +210,7 @@ const RecycleAI = () => {
 
         <label
           htmlFor="file-upload"
-          className="text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+          className="text-center bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-full shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
         >
           Upload Image
         </label>

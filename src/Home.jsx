@@ -12,10 +12,10 @@ const featureCards = [
     path: '/recycle',
   },
   {
-    title: 'Compost AI',
-    description: 'Check if leftovers or packaging belong in your green bin with quick tips.',
+    title: 'Product Recommendations',
+    description: 'Check for alternative products that reduce your environmental impact.',
     icon: '🌿',
-    path: '/compost',
+    path: '/product',
   },
   {
     title: 'Action Log',
@@ -196,10 +196,10 @@ const Home = () => {
 
     return () => {
       if (unsubscribe && typeof unsubscribe._snapUnsub === 'function') {
-        try { unsubscribe._snapUnsub() } catch (e) {}
+        try { unsubscribe._snapUnsub() } catch (e) {console.error(e)}
       }
       if (unsubscribe && typeof unsubscribe._userUnsub === 'function') {
-        try { unsubscribe._userUnsub() } catch (e) {}
+        try { unsubscribe._userUnsub() } catch (e) {console.error(e)}
       }
       unsubscribe()
     }
