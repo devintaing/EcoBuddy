@@ -76,6 +76,7 @@ const Home = () => {
     const type = (actionType.toString().toLowerCase())
     if (type.includes('photo')) return '📸'
     if (type.includes('logged')) return '📔'
+    if (type.includes('recommendation')) return '💡'
     return '🍃'
   }
 
