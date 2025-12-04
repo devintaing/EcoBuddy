@@ -64,7 +64,7 @@ const EcofriendlyRecommendations = () => {
           const activitiesRef = collection(db, 'users', user.uid, 'activities');
           const docRef = await addDoc(activitiesRef, {
             Action: `Recommendation: ${parsed.eco_alternative}`,
-            Points: 10,
+            Points: 3,
             CarbonSaved: 0,
             CreatedAt: serverTimestamp(),
             ActionType: 'Recommendation',
@@ -102,14 +102,14 @@ const EcofriendlyRecommendations = () => {
 
               if (uSnap.exists()) {
                 transaction.update(userRef, {
-                  totalPoints: (prev.totalPoints || 0) + 10,
+                  totalPoints: (prev.totalPoints || 0) + 3,
                   totalCO2Saved: (prev.totalCO2Saved || 0) + 0,
                   streak: newStreak,
                   lastUpdated: serverTimestamp(),
                 });
               } else {
                 transaction.set(userRef, {
-                  totalPoints: 10,
+                  totalPoints: 3,
                   totalCO2Saved: 0,
                   streak: newStreak,
                   lastUpdated: serverTimestamp(),
