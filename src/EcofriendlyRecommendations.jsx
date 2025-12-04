@@ -183,7 +183,6 @@ const EcofriendlyRecommendations = () => {
                     <p><span className="font-semibold">Eco Alternative:</span> {productRec.eco_alternative}</p>
                     <p><span className="font-semibold">Reason:</span> {productRec.reason}</p>
                     <p><span className="font-semibold">CO₂ Saved:</span> {productRec.co2_saved_lbs} lbs</p>
-                    <p className="text-sm text-green-600 font-semibold">+{productRec.co2_saved_lbs} points earned!</p>
                   </div>
                 )}
 
