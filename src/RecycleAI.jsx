@@ -80,7 +80,7 @@ const RecycleAI = () => {
       if (user) {
         try {
           const activitiesRef = collection(db, 'users', user.uid, 'activities');
-          const pts = 10;
+          const pts = 5;
           const carbonSaved = 0;
           const actionText = `Photo Analysis: ${parsedResponse.main_object}`;
 
