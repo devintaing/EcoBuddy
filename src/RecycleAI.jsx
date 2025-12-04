@@ -13,10 +13,11 @@ const RecycleAI = () => {
   const ai = new GoogleGenAI({apiKey: apiKey});
   const prompt = `You are an expert waste and recycling assistant. Your task is to analyze the provided image of a single object (which may be a composite of materials) and generate a JSON object with specific recycling and disposal information.
 
-    The JSON object must contain three keys:
+    The JSON object must contain four keys:
     1.  **main_object**: A concise, two-to-three word description of the primary object in the image (e.g., "Plastic food storage container with silicone lid").
     2.  **category**: A single categorical classification for the disposal of the **largest or most valuable part** of the object, chosen from *only* the following four options: **Recycle**, **Compost**, **Landfill/Trash**, or **Hazardous Waste**.
     3.  **instructions**: A short, easy-to-read, step-by-step list of clear instructions for the user on how to properly prepare and dispose of the object. **For composite items (like plastic with a silicone lid), the instructions must clearly state which parts need to be separated and how to dispose of each part.** Include a maximum of 3 key steps.
+    4.  **co2_saved_lbs**: The estimated pounds of CO2 saved by properly recycling or composting this item compared to throwing it in the landfill/trash. If the category is "Landfill/Trash" or "Hazardous Waste", set this to 0. Base estimates on typical material weights and carbon impact data.
 
     **Crucially, format the entire output as a valid JSON object.**
 
@@ -28,7 +29,8 @@ const RecycleAI = () => {
         "Separate the plastic container from the silicone lid.",
         "Rinse the plastic container and place it loosely in your recycling bin.",
         "The silicone lid must be thrown into the Landfill/Trash."
-      ]
+      ],
+      "co2_saved_lbs": 0.8
     }`
   
   const { user } = useAuthListener();
@@ -66,13 +68,12 @@ const RecycleAI = () => {
   
       const cleanedResponse = response.candidates[0].content.parts[0].text.replace('```json', '').replace('```', '').trim();
       const parsedResponse = JSON.parse(cleanedResponse);
-  
-      // const result = `${parsedResponse.main_object} \n 
-      //   Dispose in: ${parsedResponse.category} \n 
-      //   Instructions: ${parsedResponse.instructions}`;
-  
+
+      // Round CO2 to 2 decimal points
+      const roundedCO2 = Math.round((Number(parsedResponse.co2_saved_lbs) || 0) * 100) / 100;
+      parsedResponse.co2_saved_lbs = roundedCO2;
+
       console.log(parsedResponse);
-      // setResult(response.candidates[0].content.parts[0].text);
       setAnalysisResult(parsedResponse);
       setInitialText(null); // Clear loading/initial text
 
@@ -81,14 +82,15 @@ const RecycleAI = () => {
         try {
           const activitiesRef = collection(db, 'users', user.uid, 'activities');
           const pts = 5;
-          const carbonSaved = 0;
+          const carbonSaved = Number(parsedResponse.co2_saved_lbs) || 0;
+          const roundedCarbon = Math.round(carbonSaved * 100) / 100; // 2 decimal points
           const actionText = `Photo Analysis: ${parsedResponse.main_object}`;
 
           // create the activity document
           const docRef = await addDoc(activitiesRef, {
             Action: actionText,
             Points: pts,
-            CarbonSaved: carbonSaved,
+            CarbonSaved: roundedCarbon,
             CreatedAt: serverTimestamp(),
             ActionType: 'Photo'
           });
@@ -124,14 +126,14 @@ const RecycleAI = () => {
             if (uSnap.exists()) {
               transaction.update(userRef, {
                 totalPoints: (prev.totalPoints || 0) + pts,
-                totalCO2Saved: (prev.totalCO2Saved || 0) + carbonSaved,
+                totalCO2Saved: (prev.totalCO2Saved || 0) + roundedCarbon,
                 streak: newStreak,
                 lastUpdated: serverTimestamp()
               });
             } else {
               transaction.set(userRef, {
                 totalPoints: pts,
-                totalCO2Saved: carbonSaved,
+                totalCO2Saved: roundedCarbon,
                 streak: newStreak,
                 lastUpdated: serverTimestamp()
               }, { merge: true });
@@ -230,9 +232,20 @@ const RecycleAI = () => {
                         ))}
                       </ul>
                     </div>
+
+                    {/* CO2 Saved */}
+                    {analysisResult.co2_saved_lbs > 0 && (
+                      <div className="border-l-4 border-green-700 pl-3 pt-3">
+                        <h3 className="text-lg font-semibold text-gray-800">🌍 CO₂ Impact:</h3>
+                        <p className="text-2xl font-extrabold text-green-700 mt-1">
+                          {analysisResult.co2_saved_lbs} lbs CO₂e saved
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">vs. throwing in landfill</p>
+                      </div>
+                    )}
                   </div>
                 )}
-
+  
                 <input
                   id="file-upload"
                   type="file"
