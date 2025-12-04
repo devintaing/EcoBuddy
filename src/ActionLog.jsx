@@ -13,7 +13,6 @@ const ActionLog = () => {
   const { user, userDoc, loading, error } = useAuthListener();
   const [action, setAction] = useState("");
   const [carbonSaved, setCarbonSaved] = useState(0);
-  const navigate = useNavigate();
 
   const [activities, setActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
@@ -130,7 +129,7 @@ const ActionLog = () => {
 
   const logAction = async() => {
     setCalulatingCarbon(true);
-    const ai = new GoogleGenAI({apiKey: apiKey}); // Replace with your API key
+    const ai = new GoogleGenAI({apiKey: apiKey});
 
     const contents = [
       { text: `Respond with just the number of pounds of C02 saved on the first line.
@@ -142,12 +141,13 @@ const ActionLog = () => {
       contents: contents,
     });
 
-    console.log(response);
     // a reponse has a candidates array.
     // each item in candidates has a hash called content, and content is a hash too
     // inside of content is an array of parts. parts is a hash
-    setCarbonSaved(response.candidates[0].content.parts[0].text);
-    createActivity(response.candidates[0].content.parts[0].text);
+    const rawCarbon = parseFloat(response.candidates[0].content.parts[0].text) || 0;
+    const roundedCarbon = Math.round(rawCarbon * 100) / 100; // 2 decimal points
+    setCarbonSaved(roundedCarbon);
+    createActivity(roundedCarbon);
     setCalulatingCarbon(false);
   }
 
@@ -177,7 +177,7 @@ const ActionLog = () => {
               <div className="mt-10 flex flex-col gap-4">
                 <textarea
                   className="min-h-[220px] w-full resize-none rounded-[1.5rem] bg-transparent px-6 py-6 text-3xl text-ink placeholder:text-ink/30 focus:outline-none focus:ring-0"
-                  placeholder="Type like a journal… “Biked to work and skipped the car.”"
+                  placeholder="Type like a journal… “Biked to work 2 miles and skipped the car.”"
                   onChange={(e) => setAction(e.target.value)}
                 />
                 <div className="flex flex-wrap items-center gap-3">
