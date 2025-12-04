@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { useAuthListener } from "./hooks/useAuthListener";
@@ -31,7 +30,8 @@ const EcofriendlyRecommendations = () => {
       {
         "original_product": "<the product the user entered>",
         "eco_alternative": "<a recommended eco-friendly alternative>",
-        "reason": "<why this alternative is better for the environment>"
+        "reason": "<why this alternative is better for the environment>",
+        "co2_saved_lbs": <estimated pounds of CO2 saved per item by switching to the eco alternative>
       }
 
       Example:
@@ -39,7 +39,8 @@ const EcofriendlyRecommendations = () => {
       {
         "original_product": "Plastic water bottle",
         "eco_alternative": "Stainless steel water bottle",
-        "reason": "Reusable and durable, reduces plastic waste and pollution"
+        "reason": "Reusable and durable, reduces plastic waste and pollution",
+        "co2_saved_lbs": 0.43
       }
 
       User product: "${product}"
@@ -61,11 +62,12 @@ const EcofriendlyRecommendations = () => {
       // create an activity for this recommendation
       try {
         if (user && user.uid) {
+          const carbonSaved = Number(parsed.co2_saved_lbs) || 0;
           const activitiesRef = collection(db, 'users', user.uid, 'activities');
           const docRef = await addDoc(activitiesRef, {
             Action: `Recommendation: ${parsed.eco_alternative}`,
             Points: 3,
-            CarbonSaved: 0,
+            CarbonSaved: carbonSaved,
             CreatedAt: serverTimestamp(),
             ActionType: 'Recommendation',
           });
@@ -100,17 +102,19 @@ const EcofriendlyRecommendations = () => {
                 newStreak = 1;
               }
 
+              const carbonNum = Number(parsed.co2_saved_lbs) || 0;
+
               if (uSnap.exists()) {
                 transaction.update(userRef, {
                   totalPoints: (prev.totalPoints || 0) + 3,
-                  totalCO2Saved: (prev.totalCO2Saved || 0) + 0,
+                  totalCO2Saved: (prev.totalCO2Saved || 0) + carbonNum,
                   streak: newStreak,
                   lastUpdated: serverTimestamp(),
                 });
               } else {
                 transaction.set(userRef, {
                   totalPoints: 3,
-                  totalCO2Saved: 0,
+                  totalCO2Saved: carbonNum,
                   streak: newStreak,
                   lastUpdated: serverTimestamp(),
                 }, { merge: true });
@@ -178,6 +182,8 @@ const EcofriendlyRecommendations = () => {
                     <p><span className="font-semibold">Original Product:</span> {productRec.original_product}</p>
                     <p><span className="font-semibold">Eco Alternative:</span> {productRec.eco_alternative}</p>
                     <p><span className="font-semibold">Reason:</span> {productRec.reason}</p>
+                    <p><span className="font-semibold">CO₂ Saved:</span> {productRec.co2_saved_lbs} lbs</p>
+                    <p className="text-sm text-green-600 font-semibold">+{productRec.co2_saved_lbs} points earned!</p>
                   </div>
                 )}
 
